@@ -1,4 +1,4 @@
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import * as Notifications from "expo-notifications";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -6,6 +6,7 @@ import { Platform } from "react-native";
 import { useEffect, useRef } from "react";
 
 import { useIconFonts } from "@/src/hooks/use-icon-fonts";
+import { useAuth } from "@/src/hooks/use-auth";
 import { requestLocationPermission } from "@/src/utils/permissions";
 
 // Keep the native splash visible from cold start until icon fonts register.
@@ -17,7 +18,23 @@ SplashScreen.preventAutoHideAsync();
 export default function RootLayout() {
   const [loaded, error] = useIconFonts();
   const router = useRouter();
+  const segments = useSegments();
   const handled = useRef(false);
+  const { session, loading: sessionLoading } = useAuth();
+
+  // Redirige vers /auth si non connecté, vers / si connecté et sur /auth
+  useEffect(() => {
+    if (sessionLoading) return;    // session pas encore connue
+    if (!loaded && !error) return; // fonts pas encore prêtes
+
+    const onAuthScreen = segments[0] === "auth";
+
+    if (!session && !onAuthScreen) {
+      router.replace("/auth");
+    } else if (session && onAuthScreen) {
+      router.replace("/");
+    }
+  }, [session, sessionLoading, loaded, error, segments, router]);
 
   useEffect(() => {
     if (loaded || error) {
