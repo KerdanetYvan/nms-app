@@ -1,19 +1,7 @@
 import { supabase } from '@/src/lib/supabase';
+import type { AnswerRecord, ChallengeResponse, ContextInfo } from '@/src/types';
 
-export type ContextInfo = { key: string; label: string };
-export type ChallengeResponse = {
-  context: string;
-  context_label: string;
-  challenge: string;
-};
-export type AnswerRecord = {
-  id: string;
-  context: string;
-  context_label: string;
-  challenge: string;
-  answer: string;
-  created_at: string;
-};
+export type { AnswerRecord, ChallengeResponse, ContextInfo };
 
 export const api = {
   async getContexts(): Promise<ContextInfo[]> {
