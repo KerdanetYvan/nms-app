@@ -8,10 +8,11 @@ Au lieu de scroller sans fin, Doo t'invite à observer, bouger et interagir avec
 
 ## Fonctionnalités
 
-- **Sélection de contexte** — Tu choisis où tu es (bus, métro, lit, maison...) et Doo te propose un défi adapté à cet endroit.
-- **Défi aléatoire** — Un défi est tiré au sort parmi une banque de défis prédéfinis. Tu peux en tirer un autre avec le bouton shuffle.
-- **Réponse au défi** — Une fois le défi réalisé, tu peux écrire comment ça s'est passé. Tes réponses sont sauvegardées.
-- **Protection anti-scroll** — Un gardien de notifications te prévient après X minutes de scroll (configurable : 5, 10, 15, 20, 30 min) pour te rappeler de lever les yeux.
+- **Authentification** — Création de compte et connexion par email/mot de passe.
+- **Sélection de contexte** — Tu choisis où tu es (bus, métro, lit, maison...) et Doo te propose un défi adapté.
+- **Défi aléatoire** — Un défi est tiré au sort parmi la banque de défis en base. Bouton shuffle pour en piocher un autre.
+- **Réponse au défi** — Une fois le défi réalisé, tu peux écrire comment ça s'est passé. Les réponses sont sauvegardées et liées à ton compte.
+- **Protection anti-scroll** — Un gardien de notifications te prévient après X minutes de scroll (configurable : 5 à 60 min) pour te rappeler de lever les yeux.
 
 ---
 
@@ -20,23 +21,16 @@ Au lieu de scroller sans fin, Doo t'invite à observer, bouger et interagir avec
 ### Frontend
 - **React Native** avec [Expo](https://expo.dev/) (Expo Router pour la navigation)
 - **TypeScript**
-- **react-native-reanimated** pour les animations
-- **expo-notifications** pour les notifications locales (protection anti-scroll)
-- **expo-haptics** pour les retours haptiques
+- **react-native-reanimated** — animations
+- **expo-notifications** — notifications locales (protection anti-scroll)
+- **expo-haptics** — retours haptiques
 
 ### Backend
-- **Python** avec [FastAPI](https://fastapi.tiangolo.com/)
-- **MongoDB** via Motor (driver async)
-- **Pydantic** pour la validation des données
 
-### API REST — endpoints principaux
-
-| Méthode | Route | Description |
-|---------|-------|-------------|
-| `GET` | `/api/contexts` | Liste tous les contextes disponibles |
-| `GET` | `/api/challenge?context=bus` | Retourne un défi aléatoire pour un contexte |
-| `POST` | `/api/answers` | Sauvegarde la réponse d'un utilisateur |
-| `GET` | `/api/answers` | Récupère l'historique des réponses |
+- **[Supabase](https://supabase.com/)** — Auth + PostgreSQL + API auto-générée
+  - Authentification email/password via Supabase Auth
+  - Base de données PostgreSQL avec Row Level Security
+  - Accès direct depuis le client via `@supabase/supabase-js`
 
 ---
 
@@ -44,45 +38,90 @@ Au lieu de scroller sans fin, Doo t'invite à observer, bouger et interagir avec
 
 ```
 doo/
-├── backend/
-│   ├── server.py          # API FastAPI + logique des défis
-│   ├── requirements.txt   # Dépendances Python
-│   └── tests/
-│       └── test_doo_api.py
 └── frontend/
     ├── app/
-    │   ├── index.tsx      # Écran d'accueil — sélection du contexte
+    │   ├── _layout.tsx    # Layout racine — garde de session auth
+    │   ├── auth.tsx       # Écran login / register
+    │   ├── index.tsx      # Accueil — sélection du contexte
     │   ├── challenge.tsx  # Écran du défi
     │   └── answer.tsx     # Écran de réponse
     └── src/
-        ├── api/           # Client HTTP vers le backend
+        ├── api/           # Client Supabase (contextes, défis, réponses)
+        ├── hooks/         # use-auth, use-icon-fonts, use-permissions
+        ├── lib/           # Singleton client Supabase
         ├── theme/         # Couleurs et espacements
-        └── utils/         # Stockage local, notifications
+        └── utils/         # Stockage local, notifications, permissions
+```
+
+---
+
+## Schéma de base de données
+
+```sql
+contexts    — les 6 contextes (bus, pause, lit, salle_attente, metro, maison)
+challenges  — les défis associés à chaque contexte
+answers     — les réponses des utilisateurs (liées à auth.users via user_id)
 ```
 
 ---
 
 ## Lancer le projet
 
-### Backend
+### Prérequis
 
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn server:main --reload
-```
+- Node.js 18+
+- Yarn
+- Un projet [Supabase](https://supabase.com/) configuré (schéma + seed + RLS)
 
-> Pense à créer un fichier `.env` avec `MONGO_URL` et `DB_NAME`.
-
-### Frontend
+### Installation
 
 ```bash
 cd frontend
 yarn install
+```
+
+### Variables d'environnement
+
+Copie `.env.example` en `.env` et remplis les valeurs :
+
+```bash
+cp .env.example .env
+```
+
+```env
+EXPO_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+```
+
+Ces valeurs se trouvent dans **Supabase Dashboard → Settings → API**.
+
+### Démarrer en développement
+
+```bash
 yarn start
 ```
 
-Scanne le QR code avec l'app **Expo Go** sur ton téléphone, ou lance sur un émulateur avec `yarn android` / `yarn ios`.
+Scanne le QR code avec l'app **Expo Go**, ou lance sur émulateur avec `yarn android` / `yarn ios`.
+
+---
+
+## Build APK (Android)
+
+```bash
+# Installer EAS CLI
+npm install -g eas-cli
+
+# Se connecter à Expo
+eas login
+
+# Builder un APK de preview
+eas build -p android --profile preview
+```
+
+Le lien de téléchargement de l'APK est fourni à la fin du build (~15 min).
+
+> Les variables d'env doivent aussi être configurées sur EAS :
+> **expo.dev → projet → Environment variables → preview**
 
 ---
 
