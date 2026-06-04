@@ -117,6 +117,7 @@ frontend/
 ├── app/                    — screens Expo Router (un fichier = une route)
 │   ├── _layout.tsx         — layout racine, garde de session auth
 │   ├── auth.tsx            — login / register
+│   ├── onboarding.tsx      — formulaire d'onboarding (première connexion)
 │   ├── index.tsx           — accueil, sélection du contexte
 │   ├── challenge.tsx       — affichage du défi
 │   └── answer.tsx          — saisie de la réponse
@@ -124,6 +125,7 @@ frontend/
 │   ├── fonts/              — polices custom
 │   └── images/             — icônes, splash, adaptive icon
 └── src/
+    ├── algorithms/         — logique métier pure (sans UI ni dépendances RN)
     ├── api/                — client Supabase (requêtes vers la BDD)
     ├── components/         — composants React Native réutilisables
     ├── hooks/              — hooks custom (use-auth, use-icon-fonts...)
@@ -140,6 +142,7 @@ frontend/
 - Un hook custom → `src/hooks/`
 - Un type partagé → `src/types/index.ts`
 - Une fonction utilitaire sans UI → `src/utils/`
+- De la logique métier pure (algorithmes, calculs, sans dépendances RN) → `src/algorithms/`
 
 ---
 
@@ -162,6 +165,15 @@ yarn start
 Toutes les commandes frontend se lancent depuis `frontend/`, jamais depuis la racine du repo.
 
 Les notifications locales ne fonctionnent pas sur Expo Go — il faut un build réel pour les tester.
+
+### Tests
+
+```bash
+cd frontend
+npm test
+```
+
+Jest + ts-jest, configuré dans `jest.config.js`. Les tests couvrent la logique métier pure dans `src/algorithms/`. Les fichiers de test sont colocalisés avec leur module (`generateProgram.test.ts` à côté de `generateProgram.ts`).
 
 ### Build APK (Android)
 

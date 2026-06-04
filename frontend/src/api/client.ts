@@ -1,7 +1,7 @@
 import { supabase } from '@/src/lib/supabase';
-import type { AnswerRecord, ChallengeResponse, ContextInfo } from '@/src/types';
+import type { AnswerRecord, ChallengeResponse, ContextInfo, Motivation, UserProfile } from '@/src/types';
 
-export type { AnswerRecord, ChallengeResponse, ContextInfo };
+export type { AnswerRecord, ChallengeResponse, ContextInfo, Motivation, UserProfile };
 
 export const api = {
   async getContexts(): Promise<ContextInfo[]> {
@@ -52,6 +52,20 @@ export const api = {
       answer: payload.answer,
       user_id: user!.id,
     });
+    if (error) throw error;
+  },
+
+  async getUserProfile(): Promise<UserProfile | null> {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('user_id, screen_time_min, target_time_min, motivation, program')
+      .maybeSingle();
+    if (error) throw error;
+    return data as UserProfile | null;
+  },
+
+  async saveUserProfile(profile: Omit<UserProfile, 'program'>): Promise<void> {
+    const { error } = await supabase.from('user_profiles').insert(profile);
     if (error) throw error;
   },
 
