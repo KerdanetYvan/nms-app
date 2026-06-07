@@ -8,8 +8,9 @@ Au lieu de scroller sans fin, Doo t'invite à observer, bouger et interagir avec
 
 ## Fonctionnalités
 
-- **Authentification** — Création de compte et connexion par email/mot de passe.
-- **Onboarding** — Formulaire 3 étapes (temps d'écran actuel, objectif, niveau de motivation) lancé automatiquement à la première connexion.
+- **Landing** — Écran de bienvenue (`app/welcome.tsx`) affiché aux utilisateurs non connectés : logo + boutons "Créer un compte" / "J'ai déjà un compte".
+- **Authentification** — Création de compte (Prénom, Nom, Email, Mot de passe avec barre de complexité : 8 car., 2 maj., 2 min., 1 spécial) et connexion par email/mot de passe. Le prénom et nom sont stockés dans `auth.users.raw_user_meta_data`.
+- **Onboarding** — Formulaire 6 étapes lancé automatiquement à la première connexion : raison d'usage, temps d'écran actuel, objectif, applications chronophages (choix multiple), moments de scroll (choix multiple), niveau de motivation.
 - **Programme de réduction** — Algorithme personnalisé qui génère un programme hebdomadaire basé sur la courbe d'ancrage d'habitude de Lally (2010) et le modèle B=MAP de Fogg : phase d'introduction (2 semaines), réduction progressive sur courbe sigmoïde, consolidation.
 - **Visualisation du programme** — Graphique de progression (courbe Catmull-Rom lissée, aire dégradée, points colorés par phase) avec détail par phase (dates, objectif horaire, description).
 - **Sélection de contexte** — Tu choisis où tu es (bus, métro, lit, maison...) et Doo te propose un défi adapté.
@@ -45,8 +46,9 @@ doo/
 └── frontend/
     ├── app/
     │   ├── _layout.tsx      # Layout racine — garde de session auth
+    │   ├── welcome.tsx      # Landing — écran d'accueil non connecté
     │   ├── auth.tsx         # Écran login / register
-    │   ├── onboarding.tsx   # Formulaire d'onboarding (première connexion)
+    │   ├── onboarding.tsx   # Formulaire d'onboarding 6 étapes (première connexion)
     │   ├── index.tsx        # Accueil — sélection du contexte
     │   ├── program.tsx      # Visualisation du programme de réduction
     │   ├── challenge.tsx    # Écran du défi
@@ -69,7 +71,8 @@ doo/
 contexts      — les 6 contextes (bus, pause, lit, salle_attente, metro, maison)
 challenges    — les défis associés à chaque contexte
 answers       — les réponses des utilisateurs (liées à auth.users via user_id)
-user_profiles — profil de réduction (temps actuel, objectif, motivation, programme)
+user_profiles — profil de réduction (screen_time_min, target_time_min, motivation,
+                reason, apps text[], scroll_moments text[], programme)
 ```
 
 ---

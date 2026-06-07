@@ -4,14 +4,20 @@
 
 ### Added
 
-- **Onboarding** — écran 3 étapes (`app/onboarding.tsx`) : temps d'écran actuel, objectif, niveau de motivation. Lancé automatiquement à la première connexion, redirige vers le programme à la fin.
+- **Écran landing** (`app/welcome.tsx`) — page d'accueil pour les utilisateurs non connectés : logo + boutons "Créer un compte" et "J'ai déjà un compte" qui pré-remplissent le mode du formulaire auth via paramètre URL (`?mode=register` / `?mode=login`).
+- **Champs register étendus** (`app/auth.tsx`) — ajout des champs Prénom et Nom (stockés dans `auth.users.raw_user_meta_data`), suppression du champ confirmation du mot de passe.
+- **Barre de complexité du mot de passe** — validation en temps réel (8 car. min., 2 maj., 2 min., 1 spécial) avec barre 4 segments rouge → orange → jaune → vert et critères ✓/✗ affichés en permanence.
+- **Onboarding 6 étapes** — ajout de trois nouvelles étapes : "Pourquoi télécharges-tu Doo ?" (choix unique), "Sur quelles apps tu perds le plus de temps ?" (choix multiple), "Quand as-tu tendance à scroller ?" (choix multiple). Données sauvegardées dans les colonnes `reason`, `apps`, `scroll_moments` de `user_profiles`.
+- **Logo `logo_doo.png`** (`assets/images/logo_doo.png`) — utilisé sur les écrans welcome, auth et onboarding à la place du texte "Doo".
+- **Migration Supabase** — `ALTER TABLE user_profiles ADD COLUMN reason text, ADD COLUMN apps text[] DEFAULT '{}', ADD COLUMN scroll_moments text[] DEFAULT '{}'`.
+- **Onboarding** — écran initial (`app/onboarding.tsx`) : temps d'écran actuel, objectif, niveau de motivation. Lancé automatiquement à la première connexion, redirige vers le programme à la fin.
 - **Algorithme `generateProgram`** (`src/algorithms/generateProgram.ts`) — génère un programme hebdomadaire de réduction basé sur la courbe asymptotique de Lally (2010) et le modèle B=MAP de Fogg (2009). Trois phases : introduction (2 semaines à demi-rythme), réduction progressive sur sigmoid normalisée, consolidation. Tests unitaires colocalisés (`generateProgram.test.ts`).
 - **Écran programme** (`app/program.tsx`) — graphique de progression SVG (courbe Catmull-Rom lissée, aire dégradée, points colorés par phase, axe Y en heures, axe X en semaines) + carte de synthèse + détail par phase (dates, objectif horaire, description scientifique).
 - **Accès au programme depuis l'accueil** — icône `bar-chart` en haut à gauche de `index.tsx`.
 - **`react-native-svg`** — ajouté pour le rendu du graphique (compatible Expo Managed Workflow, SDK 54).
 - **`user_profiles`** — table Supabase pour stocker le profil de réduction (`screen_time_min`, `target_time_min`, `motivation`). Méthodes `getUserProfile` et `saveUserProfile` ajoutées dans `src/api/client.ts`.
 - **Authentification** — écran login/register (`app/auth.tsx`) via Supabase Auth (email + password).
-- **Garde de session** — `_layout.tsx` écoute `onAuthStateChange` et redirige vers `/auth` si non connecté, via le hook `use-auth.ts`.
+- **Garde de session** — `_layout.tsx` écoute `onAuthStateChange` et redirige vers `/welcome` si non connecté, via le hook `use-auth.ts`.
 - **Client Supabase** — `src/lib/supabase.ts` (singleton) + réécriture complète de `src/api/client.ts` pour remplacer les appels HTTP FastAPI par des requêtes Supabase directes.
 - **`.env.example`** — template documenté pour les variables `EXPO_PUBLIC_SUPABASE_URL` et `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 - **EAS Build** — profil `preview` configuré dans `eas.json` pour générer un APK Android installable directement.
@@ -25,6 +31,10 @@
 
 ### Changed
 
+- **`_layout.tsx`** — redirige les non-connectés vers `/welcome` au lieu de `/auth` ; les écrans `/welcome` et `/auth` sont tous les deux considérés comme publics.
+- **`app/auth.tsx`** — logo image à la place du texte, formulaires sans card, mode initialisé depuis le paramètre URL, icône œil pour afficher/masquer le mot de passe.
+- **`app/onboarding.tsx`** — logo image, sans card wrapper, boutons d'options visuellement cohérents avec la home (fonds colorés, shadow, bordure de sélection), inputs transparents avec bordure `#7A6678`, `KeyboardAvoidingView` pour les étapes avec saisie clavier.
+- **`UserProfile`** (`src/types/index.ts`) — ajout des champs optionnels `reason`, `apps`, `scroll_moments`.
 - **Phase 1 (intro)** — étendue de 1 à 2 semaines au même niveau cible (Lally : résistance maximale en début de programme, 1 semaine insuffisante pour installer l'adaptation initiale).
 - **Consolidation** — réduite de 4 à 3 semaines (Lally : minimum 18 jours ; 4 semaines + dernière semaine de phase 2 au même niveau créait visuellement un plateau de 5 semaines).
 - **`tsconfig.json`** — ajout de `"types": ["jest"]` pour que l'IDE reconnaisse les globals Jest sans erreurs TypeScript.

@@ -53,6 +53,7 @@ Conventions et règles de développement pour le projet Doo.
 
 - Ne pas utiliser d'APIs web (`localStorage`, `document`, `window`) — incompatibles React Native
 - Ne pas lancer `react-native run-android` — tout passe par `expo start` ou `eas build`
+- Pour `KeyboardAvoidingView` en plein écran : utiliser celui de `react-native` (pas de `react-native-keyboard-controller`) — le composant du contrôleur tiers produit des erreurs de types JSX quand il est utilisé hors d'un contexte `ScrollView`
 
 ---
 
@@ -116,9 +117,11 @@ Conventions et règles de développement pour le projet Doo.
 frontend/
 ├── app/                    — screens Expo Router (un fichier = une route)
 │   ├── _layout.tsx         — layout racine, garde de session auth
+│   ├── welcome.tsx         — landing page (utilisateurs non connectés)
 │   ├── auth.tsx            — login / register
-│   ├── onboarding.tsx      — formulaire d'onboarding (première connexion)
+│   ├── onboarding.tsx      — formulaire d'onboarding 6 étapes (première connexion)
 │   ├── index.tsx           — accueil, sélection du contexte
+│   ├── program.tsx         — visualisation du programme de réduction
 │   ├── challenge.tsx       — affichage du défi
 │   └── answer.tsx          — saisie de la réponse
 ├── assets/

@@ -27,11 +27,11 @@ export default function RootLayout() {
     if (sessionLoading) return;    // session pas encore connue
     if (!loaded && !error) return; // fonts pas encore prêtes
 
-    const onAuthScreen = segments[0] === "auth";
+    const onPublicScreen = segments[0] === "auth" || segments[0] === "welcome";
 
-    if (!session && !onAuthScreen) {
-      router.replace("/auth");
-    } else if (session && onAuthScreen) {
+    if (!session && !onPublicScreen) {
+      router.replace("/welcome");
+    } else if (session && onPublicScreen) {
       router.replace("/");
     }
   }, [session, sessionLoading, loaded, error, segments, router]);
