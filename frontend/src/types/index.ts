@@ -26,6 +26,9 @@ export type UserProfile = {
   target_time_min: number;
   motivation: Motivation;
   program?: unknown;
+  reason?: string | null;
+  apps?: string[];
+  scroll_moments?: string[];
 };
 
 // ─── Algo 2 : Ajustement en cas de dépassement ───────────────────────────────

@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Keyboard,
   Platform,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -19,15 +20,13 @@ import { supabase } from "@/src/lib/supabase";
 import { colors, radius, spacing } from "@/src/theme/colors";
 import type { Motivation } from "@/src/types";
 
-type Step = 0 | 1 | 2;
-
-const MOTIVATION_OPTIONS: { value: Motivation; label: string }[] = [
-  { value: "aggressive", label: "Beaucoup" },
-  { value: "moderate", label: "J'en ai besoin" },
-  { value: "gentle", label: "Tout doux" },
-];
+type Step = 0 | 1 | 2 | 3 | 4 | 5;
 
 const STEPS = [
+  {
+    title: "Pourquoi télécharges-tu Doo ?",
+    hint: "Pas de bonne réponse — juste ce qui te correspond.",
+  },
   {
     title: "Ton temps d'écran actuel",
     hint: "Tu peux vérifier dans tes paramètres de temps d'écran.",
@@ -37,18 +36,68 @@ const STEPS = [
     hint: "Combien d'heures par jour aimerais-tu atteindre ?",
   },
   {
+    title: "Sur quelles apps tu perds le plus de temps ?",
+    hint: "Tu peux en sélectionner plusieurs.",
+  },
+  {
+    title: "Quand as-tu tendance à scroller ?",
+    hint: "Tu peux en sélectionner plusieurs.",
+  },
+  {
     title: "Ton niveau de motivation",
     hint: "Ça nous aide à construire un programme adapté.",
   },
 ];
+
+const REASON_OPTIONS = [
+  "Je passe trop de temps sur mon téléphone",
+  "Je veux être plus présent dans ma vie",
+  "Je me sens dépendant du scroll",
+  "Je veux améliorer ma concentration",
+];
+
+const APP_OPTIONS = [
+  "TikTok",
+  "Instagram",
+  "YouTube",
+  "X / Twitter",
+  "Snapchat",
+  "Reddit",
+  "Facebook",
+  "LinkedIn",
+  "Autre",
+];
+
+const MOMENT_OPTIONS = [
+  "Le matin au réveil",
+  "Dans les transports",
+  "Pendant les repas",
+  "Le soir dans mon lit",
+  "Quand je m'ennuie",
+  "Quand je suis stressé·e",
+  "Au travail / en cours",
+];
+
+const MOTIVATION_OPTIONS: { value: Motivation; label: string }[] = [
+  { value: "aggressive", label: "Beaucoup" },
+  { value: "moderate", label: "J'en ai besoin" },
+  { value: "gentle", label: "Tout doux" },
+];
+
+function toggle(arr: string[], val: string): string[] {
+  return arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val];
+}
 
 export default function Onboarding() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   const [step, setStep] = useState<Step>(0);
+  const [reason, setReason] = useState<string | null>(null);
   const [screenTimeHours, setScreenTimeHours] = useState("");
   const [targetTimeHours, setTargetTimeHours] = useState("");
+  const [apps, setApps] = useState<string[]>([]);
+  const [scroll_moments, setScrollMoments] = useState<string[]>([]);
   const [motivation, setMotivation] = useState<Motivation | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,12 +106,17 @@ export default function Onboarding() {
 
   const validate = (): boolean => {
     if (step === 0) {
+      if (!reason) {
+        setError("Choisis une raison.");
+        return false;
+      }
+    } else if (step === 1) {
       const val = parseHours(screenTimeHours);
       if (isNaN(val) || val <= 0) {
         setError("Entre un nombre d'heures valide.");
         return false;
       }
-    } else if (step === 1) {
+    } else if (step === 2) {
       const current = parseHours(screenTimeHours);
       const target = parseHours(targetTimeHours);
       if (isNaN(target) || target <= 0) {
@@ -73,9 +127,21 @@ export default function Onboarding() {
         setError("L'objectif doit être inférieur à ton temps actuel.");
         return false;
       }
-    } else if (!motivation) {
-      setError("Choisis un niveau de motivation.");
-      return false;
+    } else if (step === 3) {
+      if (apps.length === 0) {
+        setError("Sélectionne au moins une application.");
+        return false;
+      }
+    } else if (step === 4) {
+      if (scroll_moments.length === 0) {
+        setError("Sélectionne au moins un moment.");
+        return false;
+      }
+    } else if (step === 5) {
+      if (!motivation) {
+        setError("Choisis un niveau de motivation.");
+        return false;
+      }
     }
     return true;
   };
@@ -85,7 +151,7 @@ export default function Onboarding() {
     if (!validate()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    if (step < 2) {
+    if (step < 5) {
       Keyboard.dismiss();
       setStep((s) => (s + 1) as Step);
       return;
@@ -101,6 +167,9 @@ export default function Onboarding() {
         screen_time_min: Math.round(parseHours(screenTimeHours) * 60),
         target_time_min: Math.round(parseHours(targetTimeHours) * 60),
         motivation: motivation!,
+        reason: reason!,
+        apps,
+        scroll_moments,
       });
       router.replace("/program" as never);
     } catch (err: unknown) {
@@ -137,7 +206,35 @@ export default function Onboarding() {
           <Text style={styles.question}>{title}</Text>
           <Text style={styles.hint}>{hint}</Text>
 
+          {/* Step 0 — Raison (single choice) */}
           {step === 0 && (
+            <View style={styles.optionGroup}>
+              {REASON_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt}
+                  style={[styles.option, reason === opt && styles.optionSelected]}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setReason(opt);
+                    setError(null);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.optionLabel,
+                      reason === opt && styles.optionLabelSelected,
+                    ]}
+                  >
+                    {opt}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Step 1 — Temps actuel */}
+          {step === 1 && (
             <>
               <Text style={styles.label}>Heures par jour</Text>
               <TextInput
@@ -152,7 +249,8 @@ export default function Onboarding() {
             </>
           )}
 
-          {step === 1 && (
+          {/* Step 2 — Objectif */}
+          {step === 2 && (
             <>
               <Text style={styles.label}>Heures par jour</Text>
               <TextInput
@@ -167,14 +265,76 @@ export default function Onboarding() {
             </>
           )}
 
-          {step === 2 && (
-            <View style={styles.motivationGroup}>
+          {/* Step 3 — Apps (multi-choice) */}
+          {step === 3 && (
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.optionScroll}>
+              <View style={styles.optionGroup}>
+                {APP_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt}
+                    style={[styles.option, apps.includes(opt) && styles.optionSelected]}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setApps(toggle(apps, opt));
+                      setError(null);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text
+                      style={[
+                        styles.optionLabel,
+                        apps.includes(opt) && styles.optionLabelSelected,
+                      ]}
+                    >
+                      {opt}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          )}
+
+          {/* Step 4 — Moments (multi-choice) */}
+          {step === 4 && (
+            <ScrollView showsVerticalScrollIndicator={false} style={styles.optionScroll}>
+              <View style={styles.optionGroup}>
+                {MOMENT_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt}
+                    style={[
+                      styles.option,
+                      scroll_moments.includes(opt) && styles.optionSelected,
+                    ]}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setScrollMoments(toggle(scroll_moments, opt));
+                      setError(null);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text
+                      style={[
+                        styles.optionLabel,
+                        scroll_moments.includes(opt) && styles.optionLabelSelected,
+                      ]}
+                    >
+                      {opt}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+          )}
+
+          {/* Step 5 — Motivation (single choice) */}
+          {step === 5 && (
+            <View style={styles.optionGroup}>
               {MOTIVATION_OPTIONS.map((opt) => (
                 <TouchableOpacity
                   key={opt.value}
                   style={[
-                    styles.motivationOption,
-                    motivation === opt.value && styles.motivationOptionSelected,
+                    styles.option,
+                    motivation === opt.value && styles.optionSelected,
                   ]}
                   onPress={() => {
                     Haptics.selectionAsync();
@@ -185,8 +345,8 @@ export default function Onboarding() {
                 >
                   <Text
                     style={[
-                      styles.motivationLabel,
-                      motivation === opt.value && styles.motivationLabelSelected,
+                      styles.optionLabel,
+                      motivation === opt.value && styles.optionLabelSelected,
                     ]}
                   >
                     {opt.label}
@@ -216,7 +376,7 @@ export default function Onboarding() {
         {loading ? (
           <ActivityIndicator color={colors.white} />
         ) : (
-          <Text style={styles.btnText}>{step < 2 ? "Continuer" : "Commencer"}</Text>
+          <Text style={styles.btnText}>{step < 5 ? "Continuer" : "Commencer"}</Text>
         )}
       </TouchableOpacity>
     </View>
@@ -297,28 +457,32 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.textDark,
   },
-  motivationGroup: {
+  optionScroll: {
+    maxHeight: 260,
+  },
+  optionGroup: {
     gap: spacing.sm,
   },
-  motivationOption: {
+  option: {
     backgroundColor: colors.white,
     borderRadius: radius.sm,
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: spacing.md,
     borderWidth: 1.5,
     borderColor: "transparent",
     alignItems: "center",
   },
-  motivationOptionSelected: {
+  optionSelected: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
-  motivationLabel: {
-    fontSize: 16,
+  optionLabel: {
+    fontSize: 15,
     fontWeight: "600",
     color: colors.textDark,
+    textAlign: "center",
   },
-  motivationLabelSelected: {
+  optionLabelSelected: {
     color: colors.white,
   },
   errorText: {

@@ -65,7 +65,9 @@ export const api = {
   },
 
   async saveUserProfile(profile: Omit<UserProfile, 'program'>): Promise<void> {
-    const { error } = await supabase.from('user_profiles').upsert(profile, { onConflict: 'user_id' });
+    const { error } = await supabase
+      .from('user_profiles')
+      .upsert(profile, { onConflict: 'user_id' });
     if (error) throw error;
   },
 
