@@ -2,13 +2,13 @@ import { generateProgram } from './generateProgram';
 
 // moderate 3h → 1.5h
 // weeklyRate=0.5, totalReduction=1.5, phase1Reduction=0.25
-// phase2Weeks = ceil((1.5 - 0.25) / 0.5) = ceil(2.5) = 3
-// totalWeeks = 1 + 3 + 4 = 8
+// phase2Weeks = max(4, ceil((1.5 - 0.25) / 0.5)) = max(4, 3) = 4
+// totalWeeks = 2 + 4 + 3 = 9
 describe('moderate 3h → 1.5h', () => {
   const program = generateProgram(3, 1.5, 'moderate');
 
-  test('totalWeeks = 8', () => {
-    expect(program.totalWeeks).toBe(8);
+  test('totalWeeks = 9', () => {
+    expect(program.totalWeeks).toBe(9);
   });
 
   test('première milestone à 2.75h', () => {

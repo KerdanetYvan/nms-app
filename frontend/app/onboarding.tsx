@@ -102,7 +102,7 @@ export default function Onboarding() {
         target_time_min: Math.round(parseHours(targetTimeHours) * 60),
         motivation: motivation!,
       });
-      router.replace("/");
+      router.replace("/program" as never);
     } catch (err: unknown) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       setError(err instanceof Error ? err.message : "Une erreur est survenue.");

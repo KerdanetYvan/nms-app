@@ -191,6 +191,13 @@ export default function Home() {
           Doo
         </Text>
         <TouchableOpacity
+          style={styles.programBtn}
+          onPress={() => router.push("/program" as never)}
+          hitSlop={12}
+        >
+          <Ionicons name="bar-chart-outline" size={22} color={colors.muted} />
+        </TouchableOpacity>
+        <TouchableOpacity
           style={styles.shieldBtn}
           onPress={() => setGuardVisible(true)}
           testID="open-guard-button"
@@ -328,6 +335,12 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: colors.textPlum,
     letterSpacing: 1,
+  },
+  programBtn: {
+    position: "absolute",
+    left: 0,
+    top: spacing.md,
+    padding: spacing.xs,
   },
   shieldBtn: {
     position: "absolute",
