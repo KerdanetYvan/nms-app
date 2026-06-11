@@ -144,7 +144,7 @@ export default function ProfileScreen() {
 
         {/* Infos personnelles */}
         <Animated.View entering={FadeInDown.delay(250).duration(380)}>
-          <TouchableOpacity style={styles.card} activeOpacity={0.75}>
+          <TouchableOpacity style={styles.card} activeOpacity={0.75} onPress={() => router.push("/personal-info")}>
             <View style={styles.infoRow}>
               <MaterialCommunityIcons
                 name="account-circle-outline"
