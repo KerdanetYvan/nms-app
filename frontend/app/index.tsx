@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import { BottomNav, NavTab } from "@/src/components/bottom-nav";
 import {
   Linking,
   Modal,
@@ -110,6 +111,7 @@ function ContextIcon({ btn, size }: { btn: ContextButton; size: number }) {
 export default function Home() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const [activeTab, setActiveTab] = useState<NavTab>("home");
   const [guardVisible, setGuardVisible] = useState(false);
   const [guardOn, setGuardOn] = useState(false);
   const [canAskAgain, setCanAskAgain] = useState(true);
@@ -190,7 +192,7 @@ export default function Home() {
 
       <ScrollView
         style={styles.list}
-        contentContainerStyle={{ paddingBottom: insets.bottom + spacing.xl }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 94 }}
         showsVerticalScrollIndicator={false}
       >
         {CONTEXT_BUTTONS.map((btn, i) => (
@@ -212,6 +214,8 @@ export default function Home() {
           </Animated.View>
         ))}
       </ScrollView>
+
+      <BottomNav active={activeTab} onPress={setActiveTab} />
 
       {/* Anti-doomscroll guard modal */}
       <Modal
