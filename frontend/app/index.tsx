@@ -1,11 +1,8 @@
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { BottomNav, NavTab } from "@/src/components/bottom-nav";
 import {
-  Linking,
-  Modal,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -18,17 +15,6 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 
 import { colors, radius, spacing } from "@/src/theme/colors";
-import { storage } from "@/src/utils/storage";
-import {
-  cancelScrollGuard,
-  ensureNotificationPermission,
-  getPermissionState,
-  LIMIT_OPTIONS,
-  LIMIT_STORAGE_KEY,
-  scheduleScrollGuard,
-  SCROLL_GUARD_MINUTES,
-  sendTestNotification,
-} from "@/src/utils/notifications";
 
 type IconLib = "ion" | "mci";
 
@@ -112,17 +98,6 @@ export default function Home() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<NavTab>("home");
-  const [guardVisible, setGuardVisible] = useState(false);
-  const [guardOn, setGuardOn] = useState(false);
-  const [canAskAgain, setCanAskAgain] = useState(true);
-  const [limit, setLimit] = useState(SCROLL_GUARD_MINUTES);
-
-  useEffect(() => {
-    getPermissionState().then((s) => setCanAskAgain(s.canAskAgain));
-    storage.getItem(LIMIT_STORAGE_KEY, SCROLL_GUARD_MINUTES).then((v) => {
-      if (typeof v === "number") setLimit(v);
-    });
-  }, []);
 
   const onSelectContext = (btn: ContextButton) => {
     Haptics.selectionAsync();
@@ -132,58 +107,12 @@ export default function Home() {
     });
   };
 
-  const onPickLimit = async (value: number) => {
-    Haptics.selectionAsync();
-    setLimit(value);
-    await storage.setItem(LIMIT_STORAGE_KEY, value);
-    // If protection already active, reschedule with the new limit.
-    if (guardOn) await scheduleScrollGuard(value);
-  };
-
-  const enableGuard = async () => {
-    const granted = await ensureNotificationPermission();
-    const state = await getPermissionState();
-    setCanAskAgain(state.canAskAgain);
-    if (!granted) return;
-    await scheduleScrollGuard(limit);
-    setGuardOn(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  };
-
-  const disableGuard = async () => {
-    await cancelScrollGuard();
-    setGuardOn(false);
-  };
-
-  const onTest = async () => {
-    const granted = await ensureNotificationPermission();
-    const state = await getPermissionState();
-    setCanAskAgain(state.canAskAgain);
-    if (!granted) return;
-    await sendTestNotification(limit);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setGuardVisible(false);
-  };
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]} testID="home-screen">
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.brand} testID="home-brand">
           Doo
         </Text>
-        <TouchableOpacity
-          style={styles.shieldBtn}
-          onPress={() => setGuardVisible(true)}
-          testID="open-guard-button"
-          hitSlop={12}
-        >
-          <Ionicons
-            name={guardOn ? "shield-checkmark" : "shield-outline"}
-            size={22}
-            color={guardOn ? colors.primary : colors.muted}
-          />
-        </TouchableOpacity>
       </View>
 
       <Text style={styles.subtitle} testID="home-subtitle">
@@ -216,80 +145,6 @@ export default function Home() {
       </ScrollView>
 
       <BottomNav active={activeTab} onPress={setActiveTab} />
-
-      {/* Anti-doomscroll guard modal */}
-      <Modal
-        visible={guardVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setGuardVisible(false)}
-      >
-        <Pressable style={styles.overlay} onPress={() => setGuardVisible(false)}>
-          <Pressable style={styles.guardCard} testID="guard-modal">
-            <View style={styles.guardIconWrap}>
-              <Ionicons name="timer-outline" size={28} color={colors.primary} />
-            </View>
-            <Text style={styles.guardTitle}>Protection anti-scroll</Text>
-            <Text style={styles.guardText}>
-              Doo te prévient après {limit} minutes de scroll pour venir
-              t&apos;amuser dans le vrai monde.
-            </Text>
-
-            <Text style={styles.limitLabel}>Ma limite de temps</Text>
-            <View style={styles.chipRow}>
-              {LIMIT_OPTIONS.map((value) => {
-                const active = value === limit;
-                return (
-                  <TouchableOpacity
-                    key={value}
-                    style={[styles.chip, active && styles.chipActive]}
-                    onPress={() => onPickLimit(value)}
-                    testID={`limit-chip-${value}`}
-                  >
-                    <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                      {value} min
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
-            {guardOn ? (
-              <TouchableOpacity
-                style={[styles.guardBtn, styles.guardBtnOutline]}
-                onPress={disableGuard}
-                testID="disable-guard-button"
-              >
-                <Text style={styles.guardBtnOutlineText}>Désactiver la protection</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={styles.guardBtn}
-                onPress={enableGuard}
-                testID="enable-guard-button"
-              >
-                <Text style={styles.guardBtnText}>Activer ({limit} min)</Text>
-              </TouchableOpacity>
-            )}
-
-            <TouchableOpacity
-              style={[styles.guardBtn, styles.guardBtnGhost]}
-              onPress={onTest}
-              testID="test-notification-button"
-            >
-              <Text style={styles.guardBtnGhostText}>Tester la notification</Text>
-            </TouchableOpacity>
-
-            {!canAskAgain && (
-              <TouchableOpacity onPress={() => Linking.openSettings()} hitSlop={8}>
-                <Text style={styles.settingsLink}>
-                  Notifications bloquées — Ouvrir les réglages
-                </Text>
-              </TouchableOpacity>
-            )}
-          </Pressable>
-        </Pressable>
-      </Modal>
     </View>
   );
 }
@@ -312,12 +167,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: colors.textPlum,
     letterSpacing: 1,
-  },
-  shieldBtn: {
-    position: "absolute",
-    right: 0,
-    top: spacing.md,
-    padding: spacing.xs,
   },
   subtitle: {
     fontSize: 18,
@@ -348,116 +197,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     flex: 1,
     marginRight: spacing.sm,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(61, 53, 64, 0.45)",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: spacing.lg,
-  },
-  guardCard: {
-    width: "100%",
-    backgroundColor: colors.background,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    alignItems: "center",
-  },
-  guardIconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: radius.pill,
-    backgroundColor: colors.yellow,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.md,
-  },
-  guardTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    color: colors.textPlum,
-    marginBottom: spacing.xs,
-  },
-  guardText: {
-    fontSize: 14,
-    lineHeight: 21,
-    color: colors.textDark,
-    textAlign: "center",
-    marginBottom: spacing.md,
-  },
-  limitLabel: {
-    alignSelf: "flex-start",
-    fontSize: 13,
-    fontWeight: "700",
-    color: colors.muted,
-    marginBottom: spacing.sm,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  chipRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.xs,
-    justifyContent: "center",
-    marginBottom: spacing.lg,
-  },
-  chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-    backgroundColor: colors.offWhite,
-    borderWidth: 1.5,
-    borderColor: "transparent",
-  },
-  chipActive: {
-    backgroundColor: colors.yellow,
-    borderColor: colors.primary,
-  },
-  chipText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: colors.textDark,
-  },
-  chipTextActive: {
-    color: colors.textPlum,
-    fontWeight: "800",
-  },
-  guardBtn: {
-    width: "100%",
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: radius.md,
-    alignItems: "center",
-    marginBottom: spacing.sm,
-  },
-  guardBtnText: {
-    color: colors.white,
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  guardBtnOutline: {
-    backgroundColor: "transparent",
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-  },
-  guardBtnOutlineText: {
-    color: colors.primary,
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  guardBtnGhost: {
-    backgroundColor: colors.offWhite,
-  },
-  guardBtnGhostText: {
-    color: colors.textDark,
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  settingsLink: {
-    color: colors.primary,
-    fontSize: 13,
-    fontWeight: "600",
-    textDecorationLine: "underline",
-    marginTop: spacing.sm,
   },
 });
