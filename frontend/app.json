@@ -1,30 +1,23 @@
 {
   "expo": {
     "name": "Doo",
-    "slug": "frontend",
+    "slug": "doo",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "frontend",
-    "userInterfaceStyle": "automatic",
+    "scheme": "doo",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#000"
+        "backgroundColor": "#FDFBF0"
       },
       "edgeToEdgeEnabled": true,
-      "permissions": [
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "PACKAGE_USAGE_STATS",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
-      ],
-      "package": "com.soblito.frontend"
+      "package": "app.doo"
     },
     "web": {
       "bundler": "metro",
@@ -34,19 +27,12 @@
     "plugins": [
       "expo-router",
       [
-        "expo-location",
-        {
-          "locationWhenInUsePermission": "Doo utilise ta localisation pour la météo et pour mieux comprendre ton contexte.",
-          "locationAlwaysPermission": "Doo utilise ta localisation pour la météo et pour mieux comprendre ton contexte."
-        }
-      ],
-      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash-image.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#000"
+          "backgroundColor": "#FDFBF0"
         }
       ],
       "expo-font",

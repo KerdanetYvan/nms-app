@@ -8,7 +8,6 @@ import { useFonts, Quicksand_400Regular, Quicksand_700Bold } from "@expo-google-
 
 import { useIconFonts } from "@/src/hooks/use-icon-fonts";
 import { useAuth } from "@/src/hooks/use-auth";
-import { requestLocationPermission } from "@/src/utils/permissions";
 
 // Keep the native splash visible from cold start until icon fonts register.
 // Required because @expo/vector-icons' componentDidMount fallback fires
@@ -41,7 +40,6 @@ export default function RootLayout() {
   useEffect(() => {
     if ((loaded || error) && !sessionLoading) {
       SplashScreen.hideAsync();
-      if (Platform.OS !== "web") requestLocationPermission();
     }
   }, [loaded, error, sessionLoading]);
 
