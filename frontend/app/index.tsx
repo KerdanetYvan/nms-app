@@ -107,6 +107,11 @@ export default function Home() {
     });
   };
 
+  const handleTabPress = (tab: NavTab) => {
+    setActiveTab(tab);
+    if (tab === "user") router.push("/profile");
+  };
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]} testID="home-screen">
       <View style={styles.header}>
@@ -144,7 +149,7 @@ export default function Home() {
         ))}
       </ScrollView>
 
-      <BottomNav active={activeTab} onPress={setActiveTab} />
+      <BottomNav active={activeTab} onPress={handleTabPress} />
     </View>
   );
 }
