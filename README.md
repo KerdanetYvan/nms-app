@@ -9,8 +9,9 @@ Au lieu de scroller sans fin, Doo t'invite à observer, bouger et interagir avec
 ## Fonctionnalités
 
 - **Landing** — Écran de bienvenue (`app/welcome.tsx`) affiché aux utilisateurs non connectés : logo + boutons "Créer un compte" / "J'ai déjà un compte".
-- **Authentification** — Création de compte (Prénom, Nom, Email, Mot de passe avec barre de complexité : 8 car., 2 maj., 2 min., 1 spécial) et connexion par email/mot de passe. Le prénom et nom sont stockés dans `auth.users.raw_user_meta_data`.
-- **Onboarding** — Formulaire 6 étapes lancé automatiquement à la première connexion : raison d'usage, temps d'écran actuel, objectif, applications chronophages (choix multiple), moments de scroll (choix multiple), niveau de motivation.
+- **Authentification** — Création de compte (Nom, Prénom, Email, Mot de passe avec barre de complexité : 8 car., 2 maj., 2 min., 1 spécial) et connexion par email/mot de passe. Le prénom et nom sont stockés dans `auth.users.raw_user_meta_data`.
+- **Confirmation e-mail** — Écran de saisie d'un code OTP reçu par mail (`app/confirm-email.tsx`). Vérification via `supabase.auth.verifyOtp`. Bouton "Renvoyer le code" inclus.
+- **Onboarding** — Formulaire 6 étapes lancé automatiquement à la première connexion : raison d'usage, temps d'écran actuel (picker drum-roll), objectif (picker drum-roll), applications chronophages (choix multiple), moments de scroll (choix multiple), niveau de motivation.
 - **Programme de réduction** — Algorithme personnalisé qui génère un programme hebdomadaire basé sur la courbe d'ancrage d'habitude de Lally (2010) et le modèle B=MAP de Fogg : phase d'introduction (2 semaines), réduction progressive sur courbe sigmoïde, consolidation.
 - **Visualisation du programme** — Graphique de progression (courbe Catmull-Rom lissée, aire dégradée, points colorés par phase) avec détail par phase (dates, objectif horaire, description).
 - **Sélection de contexte** — Tu choisis où tu es (bus, métro, lit, maison...) et Doo te propose un défi adapté.
@@ -27,6 +28,7 @@ Au lieu de scroller sans fin, Doo t'invite à observer, bouger et interagir avec
 - **TypeScript**
 - **react-native-reanimated** — animations
 - **react-native-svg** — rendu du graphique de progression
+- **@expo-google-fonts/quicksand** — police Quicksand (labels, titres)
 - **expo-notifications** — notifications locales (protection anti-scroll)
 - **expo-haptics** — retours haptiques
 
@@ -48,6 +50,7 @@ doo/
     │   ├── _layout.tsx      # Layout racine — garde de session auth
     │   ├── welcome.tsx      # Landing — écran d'accueil non connecté
     │   ├── auth.tsx         # Écran login / register
+    │   ├── confirm-email.tsx# Saisie du code OTP de confirmation e-mail
     │   ├── onboarding.tsx   # Formulaire d'onboarding 6 étapes (première connexion)
     │   ├── index.tsx        # Accueil — sélection du contexte
     │   ├── program.tsx      # Visualisation du programme de réduction

@@ -16,6 +16,7 @@ Conventions et règles de développement pour le projet Doo.
 | Supabase | Auth + PostgreSQL + API auto-générée |
 | EAS Build | Build et distribution des APKs/IPAs |
 | react-native-reanimated | Animations — à préférer à l'API `Animated` native |
+| @expo-google-fonts/quicksand | Police Quicksand — chargée dans `_layout.tsx`, utilisée via `fontFamily: "Quicksand_400Regular"` |
 
 ### Ce qu'on n'utilise pas
 
@@ -54,6 +55,8 @@ Conventions et règles de développement pour le projet Doo.
 - Ne pas utiliser d'APIs web (`localStorage`, `document`, `window`) — incompatibles React Native
 - Ne pas lancer `react-native run-android` — tout passe par `expo start` ou `eas build`
 - Pour `KeyboardAvoidingView` en plein écran : utiliser celui de `react-native` (pas de `react-native-keyboard-controller`) — le composant du contrôleur tiers produit des erreurs de types JSX quand il est utilisé hors d'un contexte `ScrollView`
+- Ne pas tester les `ScrollView` avec `snapToInterval` / `onMomentumScrollEnd` dans Expo Go web — ces events ne se déclenchent pas dans un navigateur. Tester sur appareil ou émulateur uniquement
+- Expo Go SDK 53+ ne supporte plus les push notifications (remote) — `expo-notifications` affichera un warning au démarrage, c'est normal. Les notifications locales fonctionnent toujours en dev build
 
 ---
 
@@ -119,6 +122,7 @@ frontend/
 │   ├── _layout.tsx         — layout racine, garde de session auth
 │   ├── welcome.tsx         — landing page (utilisateurs non connectés)
 │   ├── auth.tsx            — login / register
+│   ├── confirm-email.tsx   — saisie du code OTP de confirmation e-mail (route publique)
 │   ├── onboarding.tsx      — formulaire d'onboarding 6 étapes (première connexion)
 │   ├── index.tsx           — accueil, sélection du contexte
 │   ├── program.tsx         — visualisation du programme de réduction

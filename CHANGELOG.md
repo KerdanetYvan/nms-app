@@ -4,6 +4,26 @@
 
 ### Added
 
+- **Confirmation e-mail OTP** (`app/confirm-email.tsx`) — nouvel écran affiché après inscription : saisie du code à N chiffres reçu par mail, appel `supabase.auth.verifyOtp`, bouton "Renvoyer le code" (`supabase.auth.resend`). Gestion du collé (paste) et auto-focus case par case.
+- **Police Quicksand** — `@expo-google-fonts/quicksand` chargée dans `_layout.tsx` (`Quicksand_400Regular`, `Quicksand_700Bold`). Utilisée sur les labels de formulaire dans `auth.tsx`.
+- **Picker drum-roll** (`onboarding.tsx`, steps 1 & 2) — remplace les inputs texte pour la saisie du temps d'écran et de l'objectif. Deux colonnes `ScrollView` snappées verticalement (heures / période : jour, semaine, mois). Sélection automatique de la valeur centrée. Conversion en minutes/jour via `to_minutes_per_day` avant sauvegarde.
+- **Animation de sélection du picker** — chaque item anime son `fontSize` (13 → 18) et sa `color` (#C2BAC0 → textPlum) via `useSharedValue` + `withTiming` (180 ms) de reanimated.
+
+### Fixed
+
+- **Picker drum-roll — scroll lent sans momentum** — `onMomentumScrollEnd` ne se déclenche pas sur Android quand l'utilisateur relâche sans "flick". Ajout d'un fallback `onScrollEndDrag` avec timer (60 ms) annulé par `onMomentumScrollBegin` si le momentum démarre quand même.
+
+### Changed
+
+- **`app/welcome.tsx`** — les deux boutons ("Créer un compte" / "J'ai déjà un compte") utilisent désormais le même style `btnPrimary` (fond mauve, texte blanc).
+- **`app/auth.tsx`** — champs register réordonnés (Nom avant Prénom) ; labels en Quicksand 400, noir `#000000`, sans gras, première lettre majuscule. Après inscription, redirige vers `/confirm-email` au lieu de `/`.
+- **`app/onboarding.tsx`** — boutons d'options : non sélectionné = fond blanc + bordure et texte colorés ; sélectionné = fond coloré + texte blanc ou sombre selon luminance (`contrasting_text`).
+- **`app/_layout.tsx`** — `confirm-email` ajouté aux routes publiques (pas de redirection auth) ; splash screen attend le chargement de Quicksand.
+
+## [0.2.0] — UI & auth flow
+
+### Added
+
 - **Écran landing** (`app/welcome.tsx`) — page d'accueil pour les utilisateurs non connectés : logo + boutons "Créer un compte" et "J'ai déjà un compte" qui pré-remplissent le mode du formulaire auth via paramètre URL (`?mode=register` / `?mode=login`).
 - **Champs register étendus** (`app/auth.tsx`) — ajout des champs Prénom et Nom (stockés dans `auth.users.raw_user_meta_data`), suppression du champ confirmation du mot de passe.
 - **Barre de complexité du mot de passe** — validation en temps réel (8 car. min., 2 maj., 2 min., 1 spécial) avec barre 4 segments rouge → orange → jaune → vert et critères ✓/✗ affichés en permanence.
