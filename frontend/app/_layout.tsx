@@ -37,11 +37,11 @@ export default function RootLayout() {
   }, [session, sessionLoading, loaded, error, segments, router]);
 
   useEffect(() => {
-    if (loaded || error) {
+    if ((loaded || error) && !sessionLoading) {
       SplashScreen.hideAsync();
       if (Platform.OS !== "web") requestLocationPermission();
     }
-  }, [loaded, error]);
+  }, [loaded, error, sessionLoading]);
 
   // Tapping the "20 min" reminder opens the app on the Home screen.
   useEffect(() => {
@@ -63,7 +63,7 @@ export default function RootLayout() {
 
   // If the CDN is unreachable we fall through on error rather than wedging
   // the app — icons will tofu, but the app still boots.
-  if (!loaded && !error) return null;
+  if ((!loaded && !error) || sessionLoading) return null;
 
   return (
     <KeyboardProvider>
