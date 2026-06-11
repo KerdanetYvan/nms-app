@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -13,7 +13,8 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
+import Svg, { Circle, Path, Rect } from "react-native-svg";
 
 import { useAuth } from "@/src/hooks/use-auth";
 import { supabase } from "@/src/lib/supabase";
@@ -22,20 +23,71 @@ import { colors, radius, spacing } from "@/src/theme/colors";
 
 type FieldKey = "prenom" | "nom" | "date_naissance" | "telephone" | "email" | "password";
 
+function UserSvg({ color }: { color: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <Circle cx={12} cy={7} r={4} />
+    </Svg>
+  );
+}
+
+function CakeSvg({ color }: { color: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8" />
+      <Path d="M4 16s.5-1 2-1 2.5 2 4 2 2.5-2 4-2 2.5 2 4 2 2-1 2-1" />
+      <Path d="M2 21h20" />
+      <Path d="M7 8v3" />
+      <Path d="M12 8v3" />
+      <Path d="M17 8v3" />
+      <Path d="M7 4h.01" />
+      <Path d="M12 4h.01" />
+      <Path d="M17 4h.01" />
+    </Svg>
+  );
+}
+
+function PhoneSvg({ color }: { color: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" />
+    </Svg>
+  );
+}
+
+function MailSvg({ color }: { color: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" />
+      <Rect x={2} y={4} width={20} height={16} rx={2} />
+    </Svg>
+  );
+}
+
+function LockSvg({ color }: { color: string }) {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Rect x={3} y={11} width={18} height={11} rx={2} />
+      <Path d="M7 11V7a5 5 0 0 1 10 0v4" />
+    </Svg>
+  );
+}
+
 type FieldConfig = {
   key: FieldKey;
-  icon: string;
+  renderIcon: (color: string) => ReactNode;
   secure?: boolean;
   keyboard?: KeyboardTypeOptions;
 };
 
 const FIELDS: FieldConfig[] = [
-  { key: "prenom", icon: "account-outline" },
-  { key: "nom", icon: "account-outline" },
-  { key: "date_naissance", icon: "cake-variant-outline", keyboard: "numeric" },
-  { key: "telephone", icon: "phone-outline", keyboard: "phone-pad" },
-  { key: "email", icon: "email-outline", keyboard: "email-address" },
-  { key: "password", icon: "key-outline", secure: true },
+  { key: "prenom", renderIcon: (c) => <UserSvg color={c} /> },
+  { key: "nom", renderIcon: (c) => <UserSvg color={c} /> },
+  { key: "date_naissance", renderIcon: (c) => <CakeSvg color={c} />, keyboard: "numeric" },
+  { key: "telephone", renderIcon: (c) => <PhoneSvg color={c} />, keyboard: "phone-pad" },
+  { key: "email", renderIcon: (c) => <MailSvg color={c} />, keyboard: "email-address" },
+  { key: "password", renderIcon: (c) => <LockSvg color={c} />, secure: true },
 ];
 
 const METADATA_KEYS: FieldKey[] = ["prenom", "nom", "date_naissance", "telephone"];
@@ -54,17 +106,28 @@ export default function PersonalInfoScreen() {
     email: user?.email ?? "",
     password: "",
   });
+  const valuesRef = useRef(values);
+  const editingRef = useRef<FieldKey | null>(null);
   const [editing, setEditing] = useState<FieldKey | null>(null);
   const [saving, setSaving] = useState<FieldKey | null>(null);
 
+  const handleChangeText = (key: FieldKey, text: string) => {
+    const updated = { ...valuesRef.current, [key]: text };
+    valuesRef.current = updated;
+    setValues(updated);
+  };
+
   const startEdit = (key: FieldKey) => {
+    editingRef.current = key;
     setEditing(key);
     setTimeout(() => inputRefs.current[key]?.focus(), 50);
   };
 
   const saveField = async (key: FieldKey) => {
+    if (editingRef.current !== key) return;
+    editingRef.current = null;
     setEditing(null);
-    const value = values[key].trim();
+    const value = valuesRef.current[key].trim();
     setSaving(key);
 
     try {
@@ -110,7 +173,6 @@ export default function PersonalInfoScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View style={[styles.container, { paddingTop: insets.top }]}>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} hitSlop={12} style={styles.backBtn}>
             <Ionicons name="chevron-back" size={24} color={colors.textPlum} />
@@ -120,7 +182,7 @@ export default function PersonalInfoScreen() {
 
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: insets.bottom + 94 }}
+          contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingBottom: insets.bottom + 94 }}
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.fieldsList}>
@@ -133,19 +195,16 @@ export default function PersonalInfoScreen() {
               return (
                 <View key={field.key}>
                   <View style={styles.row}>
-                    <MaterialCommunityIcons
-                      name={field.icon as never}
-                      size={20}
-                      color={isSaving ? colors.primary : colors.muted}
-                      style={styles.rowIcon}
-                    />
+                    <View style={styles.rowIcon}>
+                      {field.renderIcon(isSaving ? colors.primary : colors.muted)}
+                    </View>
 
                     {isEditing ? (
                       <TextInput
                         ref={(r) => { inputRefs.current[field.key] = r; }}
                         style={styles.input}
                         value={values[field.key]}
-                        onChangeText={(t) => setValues((v) => ({ ...v, [field.key]: t }))}
+                        onChangeText={(t) => handleChangeText(field.key, t)}
                         onBlur={() => saveField(field.key)}
                         secureTextEntry={field.secure}
                         keyboardType={field.keyboard ?? "default"}
@@ -166,8 +225,8 @@ export default function PersonalInfoScreen() {
                       onPress={() => (isEditing ? saveField(field.key) : startEdit(field.key))}
                       hitSlop={12}
                     >
-                      <MaterialCommunityIcons
-                        name={isEditing ? "check" : "pencil-outline"}
+                      <Ionicons
+                        name={isEditing ? "checkmark" : "create-outline"}
                         size={18}
                         color={isEditing ? colors.primary : colors.muted}
                       />
@@ -220,8 +279,9 @@ const styles = StyleSheet.create({
     minHeight: 58,
   },
   rowIcon: {
-    marginRight: spacing.md,
     width: 22,
+    marginRight: spacing.md,
+    alignItems: "center",
   },
   value: {
     flex: 1,
