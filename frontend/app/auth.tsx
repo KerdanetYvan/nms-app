@@ -107,6 +107,8 @@ export default function Auth() {
           },
         });
         if (err) throw err;
+        router.replace(`/confirm-email?email=${encodeURIComponent(email)}` as never);
+        return;
       }
       router.replace("/");
     } catch (err: unknown) {
@@ -151,17 +153,6 @@ export default function Auth() {
           >
             {!isLogin && (
               <>
-                <Text style={styles.label}>Prénom</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Jean"
-                  placeholderTextColor={colors.muted}
-                  value={firstName}
-                  onChangeText={setFirstName}
-                  autoCapitalize="words"
-                  autoComplete="given-name"
-                />
-
                 <Text style={styles.label}>Nom</Text>
                 <TextInput
                   style={styles.input}
@@ -171,6 +162,17 @@ export default function Auth() {
                   onChangeText={setLastName}
                   autoCapitalize="words"
                   autoComplete="family-name"
+                />
+
+                <Text style={styles.label}>Prénom</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Jean"
+                  placeholderTextColor={colors.muted}
+                  value={firstName}
+                  onChangeText={setFirstName}
+                  autoCapitalize="words"
+                  autoComplete="given-name"
                 />
               </>
             )}
@@ -304,10 +306,8 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 13,
-    fontWeight: "700",
-    color: colors.muted,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    fontFamily: "Quicksand_400Regular",
+    color: "#000000",
     marginBottom: spacing.xs,
   },
   input: {

@@ -2,6 +2,7 @@ import { useRouter, type Href } from "expo-router";
 import { useEffect, useState } from "react";
 
 import { api } from "@/src/api/client";
+import { supabase } from "@/src/lib/supabase";
 import {
   Linking,
   Modal,
@@ -187,9 +188,11 @@ export default function Home() {
     <View style={[styles.container, { paddingTop: insets.top }]} testID="home-screen">
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.brand} testID="home-brand">
-          Doo
-        </Text>
+        <TouchableOpacity onPress={() => supabase.auth.signOut()} hitSlop={8}>
+          <Text style={styles.brand} testID="home-brand">
+            Doo
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.programBtn}
           onPress={() => router.push("/program" as never)}

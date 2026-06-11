@@ -43,8 +43,8 @@ export default function Welcome() {
         <TouchableOpacity style={styles.btnPrimary} onPress={goRegister} activeOpacity={0.85}>
           <Text style={styles.btnPrimaryText}>Créer un compte</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.btnSecondary} onPress={goLogin} activeOpacity={0.85}>
-          <Text style={styles.btnSecondaryText}>J'ai déjà un compte</Text>
+        <TouchableOpacity style={styles.btnPrimary} onPress={goLogin} activeOpacity={0.85}>
+          <Text style={styles.btnPrimaryText}>J'ai déjà un compte</Text>
         </TouchableOpacity>
       </Animated.View>
 
@@ -88,19 +88,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
-  btnSecondary: {
-    paddingVertical: 16,
-    borderRadius: radius.md,
-    alignItems: "center",
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-  },
-  btnSecondaryText: {
-    color: colors.primary,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  spacer: {
+spacer: {
     flex: 3,
   },
 });

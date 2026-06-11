@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -9,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -35,7 +34,7 @@ const STEPS = [
   },
   {
     title: "Ton objectif",
-    hint: "Combien d'heures par jour aimerais-tu atteindre ?",
+    hint: "Sélectionne la durée et la période qui te semblent atteignables.",
   },
   {
     title: "Sur quelles apps tu perds le plus de temps ?",
@@ -86,18 +85,204 @@ const MOTIVATION_OPTIONS: { value: Motivation; label: string }[] = [
   { value: "gentle", label: "Tout doux" },
 ];
 
-const OPTION_COLORS: { bg: string; text: string }[] = [
-  { bg: colors.primary,   text: colors.white },
-  { bg: colors.secondary, text: colors.textDark },
-  { bg: colors.rose,      text: colors.textDark },
-  { bg: colors.yellow,    text: colors.textDark },
-  { bg: colors.beige,     text: colors.textDark },
-  { bg: colors.offWhite,  text: colors.textDark },
+const OPTION_COLORS = [
+  colors.primary,
+  colors.secondary,
+  colors.rose,
+  colors.yellow,
+  colors.beige,
+  colors.offWhite,
 ];
 
 function toggle(arr: string[], val: string): string[] {
   return arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val];
 }
+
+type Period = 'day' | 'week' | 'month';
+
+const PERIOD_LABELS: Record<Period, string> = { day: 'jour', week: 'semaine', month: 'mois' };
+const PERIODS: Period[] = ['day', 'week', 'month'];
+
+const HOUR_OPTIONS: Record<Period, number[]> = {
+  day:   Array.from({ length: 16 },  (_, i) => i + 1),
+  week:  Array.from({ length: 80 },  (_, i) => i + 1),
+  month: Array.from({ length: 300 }, (_, i) => i + 1),
+};
+
+const ITEM_H = 44;
+const PICKER_H = 90;
+const PICKER_PAD = (PICKER_H - ITEM_H) / 2;
+
+function to_minutes_per_day(hours: number, period: Period): number {
+  if (period === 'week') return Math.round((hours / 7) * 60);
+  if (period === 'month') return Math.round((hours / 30) * 60);
+  return Math.round(hours * 60);
+}
+
+function format_hours(h: number): string {
+  const int = Math.floor(h);
+  return h - int >= 0.5 ? `${int}h30` : `${int}h`;
+}
+
+function contrasting_text(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55 ? colors.textDark : colors.white;
+}
+
+type PillPickerProps = {
+  value: number;
+  period: Period;
+  onValueChange: (v: number) => void;
+  onPeriodChange: (p: Period) => void;
+};
+
+function PillPicker({ value, period, onValueChange, onPeriodChange }: PillPickerProps) {
+  const hours_ref = useRef<ScrollView>(null);
+  const period_ref = useRef<ScrollView>(null);
+  const value_ref = useRef(value);
+  value_ref.current = value;
+  // Timers pour gérer le cas où l'utilisateur scroll lentement (pas de phase momentum)
+  const h_timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const p_timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const snap_hours = (y: number) => {
+    const opts = HOUR_OPTIONS[period];
+    const i = Math.max(0, Math.min(Math.round(y / ITEM_H), opts.length - 1));
+    onValueChange(opts[i]);
+  };
+
+  const snap_period = (y: number) => {
+    const i = Math.max(0, Math.min(Math.round(y / ITEM_H), PERIODS.length - 1));
+    const p = PERIODS[i];
+    if (p === period) return;
+    const opts = HOUR_OPTIONS[p];
+    const nearest = opts.reduce((a, b) => Math.abs(b - value) < Math.abs(a - value) ? b : a);
+    onValueChange(nearest);
+    onPeriodChange(p);
+  };
+
+  // Repositionne les deux colonnes quand la période change (et au montage).
+  // value lu via value_ref pour ne pas déclencher l'effet à chaque scroll.
+  useEffect(() => {
+    const h_i = Math.max(0, HOUR_OPTIONS[period].indexOf(value_ref.current));
+    hours_ref.current?.scrollTo({ y: h_i * ITEM_H, animated: false });
+    period_ref.current?.scrollTo({ y: PERIODS.indexOf(period) * ITEM_H, animated: false });
+  }, [period]);
+
+  return (
+    <View style={ppStyles.card}>
+      {/* Colonne heures */}
+      <View style={ppStyles.col}>
+        <ScrollView
+          ref={hours_ref}
+          showsVerticalScrollIndicator={false}
+          snapToInterval={ITEM_H}
+          decelerationRate="fast"
+          nestedScrollEnabled
+          contentContainerStyle={{ paddingVertical: PICKER_PAD }}
+          onScrollEndDrag={(e) => {
+            const y = e.nativeEvent.contentOffset.y;
+            h_timer.current = setTimeout(() => { h_timer.current = null; snap_hours(y); }, 60);
+          }}
+          onMomentumScrollBegin={() => {
+            if (h_timer.current) { clearTimeout(h_timer.current); h_timer.current = null; }
+          }}
+          onMomentumScrollEnd={(e) => snap_hours(e.nativeEvent.contentOffset.y)}
+        >
+          {HOUR_OPTIONS[period].map((h) => (
+            <View key={h} style={ppStyles.item}>
+              <Text style={[ppStyles.itemText, value === h && ppStyles.itemTextActive]}>
+                {format_hours(h)}
+              </Text>
+            </View>
+          ))}
+        </ScrollView>
+        <View style={[ppStyles.selLine, { top: PICKER_PAD }]} pointerEvents="none" />
+        <View style={[ppStyles.selLine, { top: PICKER_PAD + ITEM_H }]} pointerEvents="none" />
+      </View>
+
+      <View style={ppStyles.separator} />
+
+      {/* Colonne période */}
+      <View style={ppStyles.col}>
+        <ScrollView
+          ref={period_ref}
+          showsVerticalScrollIndicator={false}
+          snapToInterval={ITEM_H}
+          decelerationRate="fast"
+          nestedScrollEnabled
+          contentContainerStyle={{ paddingVertical: PICKER_PAD }}
+          onScrollEndDrag={(e) => {
+            const y = e.nativeEvent.contentOffset.y;
+            p_timer.current = setTimeout(() => { p_timer.current = null; snap_period(y); }, 60);
+          }}
+          onMomentumScrollBegin={() => {
+            if (p_timer.current) { clearTimeout(p_timer.current); p_timer.current = null; }
+          }}
+          onMomentumScrollEnd={(e) => snap_period(e.nativeEvent.contentOffset.y)}
+        >
+          {PERIODS.map((p) => (
+            <View key={p} style={ppStyles.item}>
+              <Text style={[ppStyles.itemText, period === p && ppStyles.itemTextActive]}>
+                {PERIOD_LABELS[p]}
+              </Text>
+            </View>
+          ))}
+        </ScrollView>
+        <View style={[ppStyles.selLine, { top: PICKER_PAD }]} pointerEvents="none" />
+        <View style={[ppStyles.selLine, { top: PICKER_PAD + ITEM_H }]} pointerEvents="none" />
+      </View>
+    </View>
+  );
+}
+
+const ppStyles = StyleSheet.create({
+  card: {
+    flexDirection: 'row',
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: radius.lg,
+    backgroundColor: colors.white,
+    height: PICKER_H,
+    overflow: 'hidden',
+  },
+  col: {
+    flex: 1,
+    position: 'relative',
+  },
+  selLine: {
+    position: 'absolute',
+    left: spacing.sm,
+    right: spacing.sm,
+    height: 1,
+    backgroundColor: colors.primary,
+    opacity: 0.35,
+  },
+  separator: {
+    width: 1,
+    backgroundColor: colors.primary,
+    opacity: 0.2,
+    marginVertical: spacing.sm,
+  },
+  item: {
+    height: ITEM_H,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  itemText: {
+    fontSize: 13,
+    fontWeight: '400',
+    color: '#C2BAC0',
+  },
+  itemTextActive: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.textPlum,
+  },
+});
 
 export default function Onboarding() {
   const router = useRouter();
@@ -105,27 +290,26 @@ export default function Onboarding() {
 
   const [step, setStep] = useState<Step>(0);
   const [reason, setReason] = useState<string | null>(null);
-  const [screenTimeHours, setScreenTimeHours] = useState("");
-  const [targetTimeHours, setTargetTimeHours] = useState("");
+  const [screenTimeValue, setScreenTimeValue] = useState(3);
+  const [screenTimePeriod, setScreenTimePeriod] = useState<Period>('day');
+  const [targetTimeValue, setTargetTimeValue] = useState(1);
+  const [targetTimePeriod, setTargetTimePeriod] = useState<Period>('day');
   const [apps, setApps] = useState<string[]>([]);
   const [scroll_moments, setScrollMoments] = useState<string[]>([]);
   const [motivation, setMotivation] = useState<Motivation | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const parseHours = (val: string) => parseFloat(val.replace(",", "."));
-
   const validate = (): boolean => {
     if (step === 0) {
       if (!reason) { setError("Choisis une raison."); return false; }
     } else if (step === 1) {
-      const val = parseHours(screenTimeHours);
-      if (isNaN(val) || val <= 0) { setError("Entre un nombre d'heures valide."); return false; }
+      if (screenTimeValue <= 0) { setError("Choisis un temps d'écran supérieur à 0."); return false; }
     } else if (step === 2) {
-      const current = parseHours(screenTimeHours);
-      const target = parseHours(targetTimeHours);
-      if (isNaN(target) || target <= 0) { setError("Entre un nombre d'heures valide."); return false; }
-      if (target >= current) { setError("L'objectif doit être inférieur à ton temps actuel."); return false; }
+      if (targetTimeValue <= 0) { setError("Choisis un objectif supérieur à 0."); return false; }
+      const current_min = to_minutes_per_day(screenTimeValue, screenTimePeriod);
+      const target_min = to_minutes_per_day(targetTimeValue, targetTimePeriod);
+      if (target_min >= current_min) { setError("L'objectif doit être inférieur à ton temps actuel."); return false; }
     } else if (step === 3) {
       if (apps.length === 0) { setError("Sélectionne au moins une application."); return false; }
     } else if (step === 4) {
@@ -152,8 +336,8 @@ export default function Onboarding() {
       const { data: { user } } = await supabase.auth.getUser();
       await api.saveUserProfile({
         user_id: user!.id,
-        screen_time_min: Math.round(parseHours(screenTimeHours) * 60),
-        target_time_min: Math.round(parseHours(targetTimeHours) * 60),
+        screen_time_min: to_minutes_per_day(screenTimeValue, screenTimePeriod),
+        target_time_min: to_minutes_per_day(targetTimeValue, targetTimePeriod),
         motivation: motivation!,
         reason: reason!,
         apps,
@@ -199,15 +383,16 @@ export default function Onboarding() {
             {step === 0 && (
               <View style={styles.optionGroup}>
                 {REASON_OPTIONS.map((opt, i) => {
-                  const { bg, text } = OPTION_COLORS[i % OPTION_COLORS.length];
+                  const color = OPTION_COLORS[i % OPTION_COLORS.length];
+                  const selected = reason === opt;
                   return (
                     <TouchableOpacity
                       key={opt}
-                      style={[styles.option, { backgroundColor: bg }, reason === opt && styles.optionSelected]}
+                      style={[styles.option, { borderColor: color, backgroundColor: selected ? color : colors.white }]}
                       onPress={() => { Haptics.selectionAsync(); setReason(opt); setError(null); }}
                       activeOpacity={0.85}
                     >
-                      <Text style={[styles.optionLabel, { color: text }]}>{opt}</Text>
+                      <Text style={[styles.optionLabel, { color: selected ? contrasting_text(color) : color }]}>{opt}</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -216,34 +401,22 @@ export default function Onboarding() {
 
             {/* Step 1 — Temps actuel */}
             {step === 1 && (
-              <>
-                <Text style={styles.label}>Heures par jour</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ex : 3.5 pour 3h30"
-                  placeholderTextColor={colors.muted}
-                  value={screenTimeHours}
-                  onChangeText={setScreenTimeHours}
-                  keyboardType="decimal-pad"
-                  autoFocus
-                />
-              </>
+              <PillPicker
+                value={screenTimeValue}
+                period={screenTimePeriod}
+                onValueChange={setScreenTimeValue}
+                onPeriodChange={setScreenTimePeriod}
+              />
             )}
 
             {/* Step 2 — Objectif */}
             {step === 2 && (
-              <>
-                <Text style={styles.label}>Heures par jour</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder={`Moins de ${screenTimeHours}h`}
-                  placeholderTextColor={colors.muted}
-                  value={targetTimeHours}
-                  onChangeText={setTargetTimeHours}
-                  keyboardType="decimal-pad"
-                  autoFocus
-                />
-              </>
+              <PillPicker
+                value={targetTimeValue}
+                period={targetTimePeriod}
+                onValueChange={setTargetTimeValue}
+                onPeriodChange={setTargetTimePeriod}
+              />
             )}
 
             {/* Step 3 — Apps (multi-choice) */}
@@ -251,15 +424,16 @@ export default function Onboarding() {
               <ScrollView showsVerticalScrollIndicator={false} style={styles.optionScroll}>
                 <View style={styles.optionGroup}>
                   {APP_OPTIONS.map((opt, i) => {
-                    const { bg, text } = OPTION_COLORS[i % OPTION_COLORS.length];
+                    const color = OPTION_COLORS[i % OPTION_COLORS.length];
+                    const selected = apps.includes(opt);
                     return (
                       <TouchableOpacity
                         key={opt}
-                        style={[styles.option, { backgroundColor: bg }, apps.includes(opt) && styles.optionSelected]}
+                        style={[styles.option, { borderColor: color, backgroundColor: selected ? color : colors.white }]}
                         onPress={() => { Haptics.selectionAsync(); setApps(toggle(apps, opt)); setError(null); }}
                         activeOpacity={0.85}
                       >
-                        <Text style={[styles.optionLabel, { color: text }]}>{opt}</Text>
+                        <Text style={[styles.optionLabel, { color: selected ? contrasting_text(color) : color }]}>{opt}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -272,15 +446,16 @@ export default function Onboarding() {
               <ScrollView showsVerticalScrollIndicator={false} style={styles.optionScroll}>
                 <View style={styles.optionGroup}>
                   {MOMENT_OPTIONS.map((opt, i) => {
-                    const { bg, text } = OPTION_COLORS[i % OPTION_COLORS.length];
+                    const color = OPTION_COLORS[i % OPTION_COLORS.length];
+                    const selected = scroll_moments.includes(opt);
                     return (
                       <TouchableOpacity
                         key={opt}
-                        style={[styles.option, { backgroundColor: bg }, scroll_moments.includes(opt) && styles.optionSelected]}
+                        style={[styles.option, { borderColor: color, backgroundColor: selected ? color : colors.white }]}
                         onPress={() => { Haptics.selectionAsync(); setScrollMoments(toggle(scroll_moments, opt)); setError(null); }}
                         activeOpacity={0.85}
                       >
-                        <Text style={[styles.optionLabel, { color: text }]}>{opt}</Text>
+                        <Text style={[styles.optionLabel, { color: selected ? contrasting_text(color) : color }]}>{opt}</Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -292,15 +467,16 @@ export default function Onboarding() {
             {step === 5 && (
               <View style={styles.optionGroup}>
                 {MOTIVATION_OPTIONS.map((opt, i) => {
-                  const { bg, text } = OPTION_COLORS[i % OPTION_COLORS.length];
+                  const color = OPTION_COLORS[i % OPTION_COLORS.length];
+                  const selected = motivation === opt.value;
                   return (
                     <TouchableOpacity
                       key={opt.value}
-                      style={[styles.option, { backgroundColor: bg }, motivation === opt.value && styles.optionSelected]}
+                      style={[styles.option, { borderColor: color, backgroundColor: selected ? color : colors.white }]}
                       onPress={() => { Haptics.selectionAsync(); setMotivation(opt.value); setError(null); }}
                       activeOpacity={0.85}
                     >
-                      <Text style={[styles.optionLabel, { color: text }]}>{opt.label}</Text>
+                      <Text style={[styles.optionLabel, { color: selected ? contrasting_text(color) : color }]}>{opt.label}</Text>
                     </TouchableOpacity>
                   );
                 })}
@@ -381,24 +557,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: spacing.lg,
   },
-  label: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: colors.muted,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: spacing.xs,
-  },
-  input: {
-    backgroundColor: "transparent",
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: "#7A6678",
-    paddingHorizontal: spacing.md,
-    paddingVertical: 14,
-    fontSize: 15,
-    color: colors.textDark,
-  },
   optionScroll: {
     maxHeight: 320,
   },
@@ -410,16 +568,12 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: spacing.lg,
     borderWidth: 2.5,
-    borderColor: "transparent",
     alignItems: "center",
     shadowColor: colors.cardShadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
     elevation: 2,
-  },
-  optionSelected: {
-    borderColor: colors.textPlum,
   },
   optionLabel: {
     fontSize: 16,

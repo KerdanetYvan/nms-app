@@ -4,6 +4,7 @@ import * as Notifications from "expo-notifications";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { Platform } from "react-native";
 import { useEffect, useRef } from "react";
+import { useFonts, Quicksand_400Regular, Quicksand_700Bold } from "@expo-google-fonts/quicksand";
 
 import { useIconFonts } from "@/src/hooks/use-icon-fonts";
 import { useAuth } from "@/src/hooks/use-auth";
@@ -17,6 +18,7 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded, error] = useIconFonts();
+  const [fontsLoaded] = useFonts({ Quicksand_400Regular, Quicksand_700Bold });
   const router = useRouter();
   const segments = useSegments();
   const handled = useRef(false);
@@ -27,7 +29,7 @@ export default function RootLayout() {
     if (sessionLoading) return;    // session pas encore connue
     if (!loaded && !error) return; // fonts pas encore prêtes
 
-    const onPublicScreen = segments[0] === "auth" || segments[0] === "welcome";
+    const onPublicScreen = segments[0] === "auth" || segments[0] === "welcome" || segments[0] === "confirm-email";
 
     if (!session && !onPublicScreen) {
       router.replace("/welcome");
@@ -63,7 +65,7 @@ export default function RootLayout() {
 
   // If the CDN is unreachable we fall through on error rather than wedging
   // the app — icons will tofu, but the app still boots.
-  if ((!loaded && !error) || sessionLoading) return null;
+  if ((!loaded && !error) || sessionLoading || !fontsLoaded) return null;
 
   return (
     <KeyboardProvider>
