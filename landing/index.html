@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Doo, l'application mobile qui transforme tes temps morts en micro-défis. Disponible sur Android.">
+  <title>Doo — L'app qui transforme tes temps morts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #FDFBF0;
+      --primary:   #766675;
+      --secondary: #E5A66F;
+      --rose:      #DBA8A8;
+      --yellow:    #EFE9B1;
+      --beige:     #E6D2B5;
+      --off-white: #F1ECDD;
+      --text-dark: #3D3540;
+      --text-plum: #4A3F4A;
+      --muted:     #9B8F99;
+      --shadow:    rgba(118, 102, 117, 0.18);
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background-color: var(--bg);
+      color: var(--text-dark);
+      line-height: 1.6;
+    }
+
+    /* ── NAV ─────────────────────────────── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 40px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .nav-cta {
+      background: var(--primary);
+      color: #fff;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      padding: 10px 22px;
+      border-radius: 12px;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .nav-cta:hover { opacity: 0.85; }
+
+    /* ── HERO ────────────────────────────── */
+    .hero {
+      display: flex;
+      align-items: center;
+      gap: 64px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 48px 40px 72px;
+    }
+
+    .hero-text { flex: 1; }
+
+    .app-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--off-white);
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 999px;
+      margin-bottom: 22px;
+      letter-spacing: 0.2px;
+    }
+
+    .app-badge-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--secondary);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 4.5vw, 52px);
+      font-weight: 800;
+      color: var(--text-plum);
+      line-height: 1.13;
+      letter-spacing: -0.5px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 span { color: var(--primary); }
+
+    .hero-sub {
+      font-size: 17px;
+      color: var(--muted);
+      font-weight: 500;
+      max-width: 420px;
+      line-height: 1.7;
+      margin-bottom: 36px;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 16px 32px;
+      border-radius: 16px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 18px var(--shadow);
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-2px); }
+
+    .btn-ghost {
+      background: var(--off-white);
+      color: var(--text-plum);
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 16px 32px;
+      border-radius: 16px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 18px var(--shadow);
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-ghost:hover { opacity: 0.85; transform: translateY(-2px); }
+
+    /* ── PHONE MOCKUP ────────────────────── */
+    .hero-visual {
+      flex-shrink: 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .phone {
+      width: 230px;
+      background: var(--bg);
+      border: 2.5px solid var(--text-plum);
+      border-radius: 40px;
+      padding: 20px 16px 24px;
+      box-shadow:
+        0 32px 80px rgba(118, 102, 117, 0.22),
+        inset 0 0 0 1px rgba(255,255,255,0.6);
+      position: relative;
+    }
+
+    /* notch */
+    .phone::before {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 52px;
+      height: 4px;
+      background: var(--text-plum);
+      border-radius: 2px;
+      opacity: 0.35;
+    }
+
+    .phone-logo {
+      display: flex;
+      justify-content: center;
+      margin: 16px 0 14px;
+    }
+
+    .phone-greeting {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-dark);
+      margin-bottom: 10px;
+      line-height: 1.4;
+    }
+
+    .mini-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 12px;
+      border-radius: 10px;
+      margin-bottom: 7px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .mini-card-arrow {
+      width: 5px;
+      height: 5px;
+      border-right: 1.5px solid currentColor;
+      border-top: 1.5px solid currentColor;
+      transform: rotate(45deg);
+      opacity: 0.5;
+      flex-shrink: 0;
+    }
+
+    /* ── SECTION COMMONS ─────────────────── */
+    .section {
+      padding: 64px 24px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: clamp(22px, 4vw, 34px);
+      font-weight: 800;
+      color: var(--text-plum);
+      text-align: center;
+      margin-bottom: 44px;
+    }
+
+    /* ── CONTEXT CARDS ───────────────────── */
+    .context-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .ctx-card {
+      display: flex;
+      align-items: center;
+      padding: 22px 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px var(--shadow);
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .ctx-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.4;
+      flex-shrink: 0;
+      margin-right: 12px;
+    }
+
+    /* ── STEPS ───────────────────────────── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .step {
+      background: var(--off-white);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: 0 4px 16px var(--shadow);
+    }
+
+    .step-num {
+      width: 34px;
+      height: 34px;
+      background: var(--primary);
+      color: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 800;
+      margin-bottom: 18px;
+    }
+
+    .step h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-plum);
+      margin-bottom: 8px;
+    }
+
+    .step p {
+      font-size: 14px;
+      color: var(--muted);
+      font-weight: 500;
+      line-height: 1.6;
+    }
+
+    /* ── CTA / WAITLIST ──────────────────── */
+    .cta-section {
+      text-align: center;
+      padding: 80px 24px 96px;
+      max-width: 580px;
+      margin: 0 auto;
+    }
+
+    .cta-section h2 {
+      font-size: clamp(26px, 5vw, 42px);
+      font-weight: 800;
+      color: var(--text-plum);
+      margin-bottom: 14px;
+    }
+
+    .cta-section > p {
+      font-size: 16px;
+      color: var(--muted);
+      font-weight: 500;
+      margin-bottom: 36px;
+      line-height: 1.65;
+    }
+
+    .waitlist-form {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .waitlist-form input[type="email"] {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 15px 20px;
+      border: 1.5px solid var(--beige);
+      border-radius: 16px;
+      background: #fff;
+      color: var(--text-dark);
+      outline: none;
+      min-width: 240px;
+      flex: 1;
+      max-width: 300px;
+      transition: border-color 0.2s;
+    }
+    .waitlist-form input[type="email"]:focus {
+      border-color: var(--primary);
+    }
+
+    .success-msg {
+      display: none;
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 16px;
+      margin-top: 20px;
+    }
+
+    /* ── DIVIDER ─────────────────────────── */
+    .divider {
+      max-width: 960px;
+      margin: 0 auto;
+      border: none;
+      border-top: 1.5px solid var(--off-white);
+    }
+
+    /* ── FOOTER ──────────────────────────── */
+    footer {
+      padding: 28px 40px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    /* ── RESPONSIVE ──────────────────────── */
+    @media (max-width: 768px) {
+      .hero {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 36px 24px 56px;
+        gap: 48px;
+      }
+      .hero-text { order: 1; }
+      .hero-visual { order: 2; }
+      .hero-sub { max-width: 100%; }
+      .hero-actions { justify-content: center; }
+      nav { padding: 20px 24px; }
+      .context-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <svg width="80" height="42" viewBox="0 0 381 199" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Doo">
+      <path d="M38.4254 196C34.748 196 31.6557 194.746 29.1484 192.239C26.6412 189.732 25.3875 186.64 25.3875 182.962V13.2198C25.3875 9.37533 26.6412 6.28303 29.1484 3.94291C31.6557 1.43564 34.748 0.182002 38.4254 0.182002H83.807C102.695 0.182002 119.494 4.36079 134.203 12.7184C148.913 21.0759 160.362 32.693 168.553 47.5695C176.743 62.2788 180.838 79.0775 180.838 97.9656C180.838 116.854 176.743 133.736 168.553 148.613C160.362 163.489 148.913 175.106 134.203 183.464C119.494 191.821 102.695 196 83.807 196H38.4254ZM83.807 172.933C97.6806 172.933 110.05 169.757 120.915 163.405C131.947 157.054 140.471 148.195 146.489 136.828C152.673 125.295 155.766 112.341 155.766 97.9656C155.766 83.5906 152.673 70.7199 146.489 59.3536C140.471 47.9873 131.947 39.1283 120.915 32.7765C110.05 26.4248 97.6806 23.2489 83.807 23.2489H51.4632V172.933H83.807Z" fill="#7A6678"/>
+      <ellipse cx="237.882" cy="145.035" rx="44.4639" ry="44.7439" stroke="#7A6678" stroke-width="17.9091"/>
+      <circle cx="257.891" cy="128.945" r="14.3273" fill="#7A6678"/>
+      <ellipse cx="327.428" cy="145.035" rx="44.4639" ry="44.7439" stroke="#7A6678" stroke-width="17.9091"/>
+      <circle cx="347.436" cy="128.945" r="14.3273" fill="#7A6678"/>
+    </svg>
+    <a href="#waitlist" class="nav-cta">Rejoindre la bêta</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-text">
+      <span class="app-badge">
+        <span class="app-badge-dot"></span>
+        Application mobile · Android
+      </span>
+      <h1>Transforme tes<br><span>temps morts</span><br>en vrais moments</h1>
+      <p class="hero-sub">
+        Doo t'accompagne tout au long de ta journée avec des micro-défis
+        adaptés à l'endroit où tu es.
+      </p>
+      <div class="hero-actions">
+        <a href="#waitlist" class="btn-primary">Rejoindre la bêta</a>
+        <a href="#how" class="btn-ghost">Comment ça marche ?</a>
+      </div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="phone">
+        <div class="phone-logo">
+          <svg width="56" height="30" viewBox="0 0 381 199" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M38.4254 196C34.748 196 31.6557 194.746 29.1484 192.239C26.6412 189.732 25.3875 186.64 25.3875 182.962V13.2198C25.3875 9.37533 26.6412 6.28303 29.1484 3.94291C31.6557 1.43564 34.748 0.182002 38.4254 0.182002H83.807C102.695 0.182002 119.494 4.36079 134.203 12.7184C148.913 21.0759 160.362 32.693 168.553 47.5695C176.743 62.2788 180.838 79.0775 180.838 97.9656C180.838 116.854 176.743 133.736 168.553 148.613C160.362 163.489 148.913 175.106 134.203 183.464C119.494 191.821 102.695 196 83.807 196H38.4254ZM83.807 172.933C97.6806 172.933 110.05 169.757 120.915 163.405C131.947 157.054 140.471 148.195 146.489 136.828C152.673 125.295 155.766 112.341 155.766 97.9656C155.766 83.5906 152.673 70.7199 146.489 59.3536C140.471 47.9873 131.947 39.1283 120.915 32.7765C110.05 26.4248 97.6806 23.2489 83.807 23.2489H51.4632V172.933H83.807Z" fill="#7A6678"/>
+            <ellipse cx="237.882" cy="145.035" rx="44.4639" ry="44.7439" stroke="#7A6678" stroke-width="17.9091"/>
+            <circle cx="257.891" cy="128.945" r="14.3273" fill="#7A6678"/>
+            <ellipse cx="327.428" cy="145.035" rx="44.4639" ry="44.7439" stroke="#7A6678" stroke-width="17.9091"/>
+            <circle cx="347.436" cy="128.945" r="14.3273" fill="#7A6678"/>
+          </svg>
+        </div>
+        <p class="phone-greeting">Salut !<br>Que se passe-t-il autour de toi ?</p>
+        <div class="mini-card" style="background:#766675;color:#fff;">
+          <span>Dans le bus</span><div class="mini-card-arrow"></div>
+        </div>
+        <div class="mini-card" style="background:#E5A66F;color:#3D3540;">
+          <span>En pause</span><div class="mini-card-arrow"></div>
+        </div>
+        <div class="mini-card" style="background:#DBA8A8;color:#3D3540;">
+          <span>Dans mon lit</span><div class="mini-card-arrow"></div>
+        </div>
+        <div class="mini-card" style="background:#EFE9B1;color:#3D3540;">
+          <span>Salle d'attente</span><div class="mini-card-arrow"></div>
+        </div>
+        <div class="mini-card" style="background:#E6D2B5;color:#3D3540;">
+          <span>Dans le métro</span><div class="mini-card-arrow"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- CONTEXT MOMENTS -->
+  <section class="section" id="moments">
+    <p class="section-label">Adapté à ton instant</p>
+    <h2 class="section-title">Dis-nous où tu en es</h2>
+    <div class="context-grid">
+      <div class="ctx-card" style="background:#766675;color:#fff;">
+        <div class="ctx-dot"></div>Dans le bus
+      </div>
+      <div class="ctx-card" style="background:#E5A66F;color:#3D3540;">
+        <div class="ctx-dot"></div>En pause
+      </div>
+      <div class="ctx-card" style="background:#DBA8A8;color:#3D3540;">
+        <div class="ctx-dot"></div>Dans mon lit
+      </div>
+      <div class="ctx-card" style="background:#EFE9B1;color:#3D3540;">
+        <div class="ctx-dot"></div>Salle d'attente
+      </div>
+      <div class="ctx-card" style="background:#E6D2B5;color:#3D3540;">
+        <div class="ctx-dot"></div>Dans le métro
+      </div>
+      <div class="ctx-card" style="background:#F1ECDD;color:#3D3540;">
+        <div class="ctx-dot"></div>À la maison
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- STEPS -->
+  <section class="section" id="how">
+    <p class="section-label">Comment ça marche</p>
+    <h2 class="section-title">Simple comme bonjour</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Ouvre l'app</h3>
+        <p>Lance Doo sur ton téléphone et sélectionne ton contexte du moment — le bus, ta pause, ton lit...</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Reçois ton défi</h3>
+        <p>Doo te propose un micro-défi taillé pour ta situation et ton temps disponible.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Réponds et progresse</h3>
+        <p>Complète le défi et construis une belle habitude, jour après jour.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WAITLIST -->
+  <section class="cta-section" id="waitlist">
+    <h2>Prêt à l'essayer ?</h2>
+    <p>
+      Doo arrive bientôt sur Android. Laisse ton adresse
+      pour être parmi les premiers à télécharger l'app.
+    </p>
+    <form class="waitlist-form" onsubmit="handleSubmit(event)">
+      <input type="email" placeholder="ton@email.com" required autocomplete="email">
+      <button type="submit" class="btn-primary">Je rejoins !</button>
+    </form>
+    <p class="success-msg" id="success-msg">
+      C'est noté, on te tient au courant !
+    </p>
+    <p id="error-msg" style="display:none;color:#C0504D;font-weight:600;font-size:14px;margin-top:16px;">
+      Une erreur s'est produite, réessaie dans un instant.
+    </p>
+  </section>
+
+  <hr class="divider">
+
+  <footer>
+    <p>&copy; 2025 Doo</p>
+  </footer>
+
+  <script>
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const form = e.target;
+      const email = form.querySelector('input[type="email"]').value;
+      const btn = form.querySelector('button');
+      const errorMsg = document.getElementById('error-msg');
+
+      btn.disabled = true;
+      btn.textContent = '...';
+      errorMsg.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/waitlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+        if (res.ok) {
+          form.style.display = 'none';
+          document.getElementById('success-msg').style.display = 'block';
+        } else {
+          throw new Error();
+        }
+      } catch {
+        errorMsg.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Je rejoins !';
+      }
+    }
+  </script>
+
+</body>
+</html>
