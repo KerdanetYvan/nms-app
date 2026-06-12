@@ -12,10 +12,23 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
+import Svg, { Circle, Ellipse } from "react-native-svg";
 
 import { api } from "@/src/api/client";
-import { DooLogo } from "@/src/components/doo-logo";
+import { BottomNav } from "@/src/components/bottom-nav";
 import { colors, radius, spacing } from "@/src/theme/colors";
+
+function EyesLogo({ size = 120 }: { size?: number }) {
+  const height = Math.round((size * 60) / 109);
+  return (
+    <Svg width={size} height={height} viewBox="0 0 109 60" fill="none">
+      <Ellipse cx="29.4134" cy="29.5703" rx="24.9134" ry="25.0703" fill="white" stroke="#7A6678" strokeWidth="9" />
+      <Circle cx="46.5277" cy="29.5277" r="8.02766" fill="#7A6678" />
+      <Ellipse cx="79.5863" cy="29.5703" rx="24.9134" ry="25.0703" fill="white" stroke="#7A6678" strokeWidth="9" />
+      <Circle cx="96.7005" cy="29.5277" r="8.02766" fill="#7A6678" />
+    </Svg>
+  );
+}
 
 export default function Challenge() {
   const router = useRouter();
@@ -62,35 +75,20 @@ export default function Challenge() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]} testID="challenge-screen">
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => router.back()}
-          testID="challenge-back"
-          hitSlop={12}
-        >
-          <Ionicons name="chevron-back" size={26} color={colors.textPlum} />
-        </TouchableOpacity>
-        <DooLogo width={120} />
-        <TouchableOpacity
-          style={styles.shuffleBtn}
-          onPress={onShuffle}
-          testID="challenge-shuffle"
-          hitSlop={12}
-        >
-          <Ionicons name="shuffle" size={22} color={colors.muted} />
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity
+        style={styles.backBtn}
+        onPress={() => router.back()}
+        testID="challenge-back"
+        hitSlop={12}
+      >
+        <Ionicons name="chevron-back" size={26} color={colors.textPlum} />
+      </TouchableOpacity>
 
       <View style={styles.body}>
-        {!!label && (
-          <View style={styles.contextPill}>
-            <Text style={styles.contextPillText}>{label}</Text>
-          </View>
-        )}
+        <EyesLogo size={120} />
 
         {loading ? (
-          <ActivityIndicator color={colors.primary} size="large" />
+          <ActivityIndicator color={colors.primary} size="large" style={styles.loader} />
         ) : error ? (
           <View style={styles.center}>
             <Text style={styles.challengeText}>Oups, impossible de charger le défi.</Text>
@@ -110,15 +108,29 @@ export default function Challenge() {
         )}
       </View>
 
-      <TouchableOpacity
-        style={[styles.startBtn, { marginBottom: insets.bottom + spacing.md }]}
-        onPress={onStart}
-        disabled={loading || error}
-        activeOpacity={0.85}
-        testID="start-challenge-button"
-      >
-        <Text style={styles.startBtnText}>Commencer le défi !</Text>
-      </TouchableOpacity>
+      <View style={[styles.footer, { marginBottom: insets.bottom + 86 }]}>
+        <TouchableOpacity
+          style={[styles.startBtn, (loading || error) && styles.startBtnDisabled]}
+          onPress={onStart}
+          disabled={loading || error}
+          activeOpacity={0.85}
+          testID="start-challenge-button"
+        >
+          <Text style={styles.startBtnText}>Commencer le défi !</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={onShuffle}
+          style={styles.shuffleLink}
+          disabled={loading}
+          testID="challenge-shuffle"
+          hitSlop={8}
+        >
+          <Text style={styles.shuffleLinkText}>← faire un autre défi</Text>
+        </TouchableOpacity>
+      </View>
+
+      <BottomNav />
     </View>
   );
 }
@@ -129,55 +141,27 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     paddingHorizontal: spacing.lg,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
-  },
-  brand: {
-    fontSize: 30,
-    fontWeight: "800",
-    color: colors.textPlum,
-    letterSpacing: 1,
-  },
   backBtn: {
-    position: "absolute",
-    left: 0,
-    top: spacing.md,
-    padding: spacing.xs,
-  },
-  shuffleBtn: {
-    position: "absolute",
-    right: 0,
-    top: spacing.md,
+    marginTop: spacing.md,
+    alignSelf: "flex-start",
     padding: spacing.xs,
   },
   body: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    gap: spacing.xl,
+  },
+  loader: {
+    marginTop: spacing.lg,
   },
   center: {
     alignItems: "center",
   },
-  contextPill: {
-    backgroundColor: colors.yellow,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.pill,
-    marginBottom: spacing.xl,
-  },
-  contextPillText: {
-    color: colors.textDark,
-    fontWeight: "600",
-    fontSize: 13,
-  },
   challengeText: {
-    fontSize: 30,
-    lineHeight: 42,
-    fontWeight: "700",
+    fontSize: 26,
+    lineHeight: 38,
+    fontWeight: "600",
     color: colors.textPlum,
     textAlign: "center",
   },
@@ -192,20 +176,36 @@ const styles = StyleSheet.create({
     color: colors.textDark,
     fontWeight: "600",
   },
+  footer: {
+    alignItems: "center",
+    gap: spacing.md,
+  },
   startBtn: {
     backgroundColor: colors.primary,
     paddingVertical: 18,
     borderRadius: radius.md,
     alignItems: "center",
+    alignSelf: "stretch",
     shadowColor: colors.cardShadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
     elevation: 3,
   },
+  startBtnDisabled: {
+    opacity: 0.5,
+  },
   startBtnText: {
     color: colors.white,
     fontSize: 17,
     fontWeight: "700",
+  },
+  shuffleLink: {
+    paddingVertical: spacing.xs,
+  },
+  shuffleLinkText: {
+    color: colors.textPlum,
+    fontSize: 14,
+    fontWeight: "500",
   },
 });
