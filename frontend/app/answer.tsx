@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
   Platform,
   StyleSheet,
   Text,
@@ -9,15 +10,26 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
+import Svg, { Circle, Ellipse } from "react-native-svg";
 
 import { api } from "@/src/api/client";
-import { DooLogo } from "@/src/components/doo-logo";
 import { colors, radius, spacing } from "@/src/theme/colors";
+
+function EyesLookingDown({ size = 109 }: { size?: number }) {
+  const height = Math.round((size * 60) / 109);
+  return (
+    <Svg width={size} height={height} viewBox="0 0 109 60" fill="none">
+      <Ellipse cx="29.4134" cy="29.5703" rx="24.9134" ry="25.0703" fill="white" stroke="#7A6678" strokeWidth="9" />
+      <Circle cx="30.1418" cy="44.5277" r="8.02766" fill="#7A6678" />
+      <Ellipse cx="79.5865" cy="29.5703" rx="24.9134" ry="25.0703" fill="white" stroke="#7A6678" strokeWidth="9" />
+      <Circle cx="80.3145" cy="44.5277" r="8.02766" fill="#7A6678" />
+    </Svg>
+  );
+}
 
 export default function Answer() {
   const router = useRouter();
@@ -50,24 +62,14 @@ export default function Answer() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]} testID="answer-screen">
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => router.back()}
-          testID="answer-back"
-          hitSlop={12}
-        >
-          <Ionicons name="chevron-back" size={26} color={colors.textPlum} />
-        </TouchableOpacity>
-        <DooLogo width={120} />
-      </View>
-
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={16}
       >
         <View style={styles.body}>
+          <EyesLookingDown size={120} />
+
           {done ? (
             <Animated.View
               entering={Platform.OS === "web" ? undefined : FadeIn}
@@ -93,11 +95,9 @@ export default function Answer() {
             <View style={styles.card} testID="answer-card">
               <Text style={styles.cardTitle}>Donner ma réponse</Text>
 
-              {!!challenge && <Text style={styles.challengeHint}>{challenge}</Text>}
-
               <TextInput
                 style={styles.input}
-                placeholder="j'ai vu 4 voitures jaunes..."
+                placeholder="J'ai vu 4 voitures jaunes..."
                 placeholderTextColor={colors.muted}
                 value={answer}
                 onChangeText={setAnswer}
@@ -125,13 +125,12 @@ export default function Answer() {
 
       {!done && (
         <TouchableOpacity
-          style={[styles.backLink, { marginBottom: insets.bottom + spacing.md }]}
+          style={[styles.backLink, { marginBottom: insets.bottom + spacing.lg }]}
           onPress={() => router.back()}
           testID="back-to-challenge-link"
           hitSlop={10}
         >
-          <Text style={styles.backLinkText}>Retour au défi </Text>
-          <Ionicons name="arrow-forward" size={16} color={colors.textDark} />
+          <Text style={styles.backLinkText}>← Retour au défi</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -147,52 +146,29 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
-  },
-  brand: {
-    fontSize: 30,
-    fontWeight: "800",
-    color: colors.textPlum,
-    letterSpacing: 1,
-  },
-  backBtn: {
-    position: "absolute",
-    left: 0,
-    top: spacing.md,
-    padding: spacing.xs,
-  },
   body: {
     flex: 1,
+    alignItems: "center",
     justifyContent: "center",
+    gap: spacing.xl,
   },
   card: {
-    backgroundColor: colors.yellow,
+    backgroundColor: colors.offWhite,
     borderRadius: radius.lg,
     padding: spacing.lg,
     alignItems: "center",
+    alignSelf: "stretch",
     shadowColor: colors.cardShadow,
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.4,
     shadowRadius: 12,
     elevation: 3,
   },
   cardTitle: {
     fontSize: 20,
-    fontWeight: "800",
+    fontWeight: "700",
     color: colors.textPlum,
     marginBottom: spacing.md,
-  },
-  challengeHint: {
-    fontSize: 14,
-    color: colors.textDark,
-    textAlign: "center",
-    marginBottom: spacing.md,
-    fontStyle: "italic",
   },
   input: {
     width: "100%",
@@ -204,7 +180,7 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     fontSize: 15,
     color: colors.textDark,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
     textAlignVertical: "top",
   },
   validateBtn: {
@@ -239,15 +215,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   backLink: {
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
     paddingVertical: spacing.sm,
   },
   backLinkText: {
     fontSize: 15,
-    color: colors.textDark,
-    fontWeight: "600",
-    textDecorationLine: "underline",
+    color: colors.textPlum,
+    fontWeight: "500",
   },
 });
