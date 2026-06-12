@@ -1,8 +1,10 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Keyboard,
+  KeyboardAvoidingView,
   Platform,
   StyleSheet,
   Text,
@@ -13,7 +15,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
-import { Ionicons } from "@expo/vector-icons";
 
 import { supabase } from "@/src/lib/supabase";
 import { colors, radius, spacing } from "@/src/theme/colors";
@@ -32,6 +33,15 @@ export default function ConfirmEmail() {
   const [error, setError] = useState<string | null>(null);
 
   const inputs = useRef<(TextInput | null)[]>(Array(CODE_LENGTH).fill(null));
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const show = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hide = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+    return () => { show.remove(); hide.remove(); };
+  }, []);
 
   const handleDigit = (text: string, index: number) => {
     const cleaned = text.replace(/\D/g, "");
@@ -102,22 +112,23 @@ export default function ConfirmEmail() {
   const isComplete = digits.every((d) => d !== "");
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom + spacing.lg }]}>
-      <Animated.View
-        style={styles.logoZone}
-        entering={Platform.OS === "web" ? undefined : FadeInDown.delay(0).springify()}
-      >
-        <Image source={require("@/assets/images/logo_doo.png")} />
-      </Animated.View>
+    <KeyboardAvoidingView
+      style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom + spacing.lg }]}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      {!keyboardVisible && (
+        <Animated.View
+          style={styles.logoZone}
+          entering={Platform.OS === "web" ? undefined : FadeInDown.delay(0).springify()}
+        >
+          <Image source={require("@/assets/images/logo_doo.png")} />
+        </Animated.View>
+      )}
 
       <Animated.View
         style={styles.content}
         entering={Platform.OS === "web" ? undefined : FadeInDown.delay(100).springify()}
       >
-        <View style={styles.iconCircle}>
-          <Ionicons name="mail-outline" size={36} color={colors.primary} />
-        </View>
-
         <Text style={styles.title}>Vérifie ta boîte mail</Text>
 
         <Text style={styles.body}>
@@ -180,7 +191,7 @@ export default function ConfirmEmail() {
           </TouchableOpacity>
         )}
       </Animated.View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -199,15 +210,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: spacing.md,
-  },
-  iconCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: radius.pill,
-    backgroundColor: colors.offWhite,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: spacing.sm,
   },
   title: {
     fontSize: 24,
