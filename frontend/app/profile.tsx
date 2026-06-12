@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -13,7 +14,9 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
 import { useAuth } from "@/src/hooks/use-auth";
-import { BottomNav, NavTab } from "@/src/components/bottom-nav";
+import { api } from "@/src/api/client";
+import type { Profile } from "@/src/types";
+import { BottomNav } from "@/src/components/bottom-nav";
 import { colors, radius, spacing } from "@/src/theme/colors";
 
 const TOTAL_DAYS = 96;
@@ -50,19 +53,23 @@ export default function ProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const [profileData, setProfileData] = useState<Profile | null>(null);
 
+  useEffect(() => {
+    if (!user) return;
+    api.getProfile().then(setProfileData).catch(() => {});
+  }, [user?.id]);
+
+  const prenom = profileData?.prenom ?? undefined;
+  const nom = profileData?.nom ?? undefined;
   const displayName =
-    user?.user_metadata?.full_name ??
-    user?.user_metadata?.name ??
+    prenom && nom ? `${prenom} ${nom}` :
+    prenom ?? nom ??
     user?.email ??
     "Utilisateur";
 
   const joinDate = user?.created_at ? formatJoinDate(user.created_at) : "";
   const todayLabel = formatDayHeader(new Date());
-
-  const handleTabPress = (tab: NavTab) => {
-    if (tab === "home") router.replace("/");
-  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -162,7 +169,7 @@ export default function ProfileScreen() {
         </Animated.View>
       </ScrollView>
 
-      <BottomNav active="user" onPress={handleTabPress} />
+      <BottomNav />
     </View>
   );
 }

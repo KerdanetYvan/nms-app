@@ -1,12 +1,12 @@
-import type { Motivation } from '../types';
+import type { Motivation, Phase } from '../types';
+
+export type { Phase };
 
 const WEEKLY_RATES: Record<Motivation, number> = {
   aggressive: 1.0,
   moderate:   0.5,
   gentle:     0.25,
 };
-
-export type Phase = 'intro' | 'reduction_main' | 'consolidation';
 
 export type WeekMilestone = {
   week: number;

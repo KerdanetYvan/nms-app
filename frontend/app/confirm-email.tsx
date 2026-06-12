@@ -2,7 +2,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -17,6 +16,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 
 import { supabase } from "@/src/lib/supabase";
+import { DooLogo } from "@/src/components/doo-logo";
 import { colors, radius, spacing } from "@/src/theme/colors";
 
 const CODE_LENGTH = 6;
@@ -121,7 +121,7 @@ export default function ConfirmEmail() {
           style={styles.logoZone}
           entering={Platform.OS === "web" ? undefined : FadeInDown.delay(0).springify()}
         >
-          <Image source={require("@/assets/images/logo_doo.png")} />
+          <DooLogo width={160} />
         </Animated.View>
       )}
 

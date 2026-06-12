@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -17,8 +17,9 @@ import { Ionicons } from "@expo/vector-icons";
 import Svg, { Circle, Path, Rect } from "react-native-svg";
 
 import { useAuth } from "@/src/hooks/use-auth";
+import { api } from "@/src/api/client";
 import { supabase } from "@/src/lib/supabase";
-import { BottomNav, NavTab } from "@/src/components/bottom-nav";
+import { BottomNav } from "@/src/components/bottom-nav";
 import { colors, radius, spacing } from "@/src/theme/colors";
 
 type FieldKey = "prenom" | "nom" | "date_naissance" | "telephone" | "email" | "password";
@@ -76,18 +77,19 @@ function LockSvg({ color }: { color: string }) {
 
 type FieldConfig = {
   key: FieldKey;
+  label: string;
   renderIcon: (color: string) => ReactNode;
   secure?: boolean;
   keyboard?: KeyboardTypeOptions;
 };
 
 const FIELDS: FieldConfig[] = [
-  { key: "prenom", renderIcon: (c) => <UserSvg color={c} /> },
-  { key: "nom", renderIcon: (c) => <UserSvg color={c} /> },
-  { key: "date_naissance", renderIcon: (c) => <CakeSvg color={c} />, keyboard: "numeric" },
-  { key: "telephone", renderIcon: (c) => <PhoneSvg color={c} />, keyboard: "phone-pad" },
-  { key: "email", renderIcon: (c) => <MailSvg color={c} />, keyboard: "email-address" },
-  { key: "password", renderIcon: (c) => <LockSvg color={c} />, secure: true },
+  { key: "prenom",         label: "Prénom",           renderIcon: (c) => <UserSvg color={c} /> },
+  { key: "nom",            label: "Nom",              renderIcon: (c) => <UserSvg color={c} /> },
+  { key: "date_naissance", label: "Date de naissance", renderIcon: (c) => <CakeSvg color={c} />, keyboard: "numeric" },
+  { key: "telephone",      label: "Téléphone",        renderIcon: (c) => <PhoneSvg color={c} />, keyboard: "phone-pad" },
+  { key: "email",          label: "E-mail",           renderIcon: (c) => <MailSvg color={c} />, keyboard: "email-address" },
+  { key: "password",       label: "Mot de passe",     renderIcon: (c) => <LockSvg color={c} />, secure: true },
 ];
 
 const METADATA_KEYS: FieldKey[] = ["prenom", "nom", "date_naissance", "telephone"];
@@ -99,17 +101,28 @@ export default function PersonalInfoScreen() {
   const inputRefs = useRef<Record<string, TextInput | null>>({});
 
   const [values, setValues] = useState<Record<FieldKey, string>>({
-    prenom: user?.user_metadata?.prenom ?? "",
-    nom: user?.user_metadata?.nom ?? "",
-    date_naissance: user?.user_metadata?.date_naissance ?? "",
-    telephone: user?.user_metadata?.telephone ?? "",
-    email: user?.email ?? "",
-    password: "",
+    prenom: "", nom: "", date_naissance: "", telephone: "", email: "", password: "",
   });
   const valuesRef = useRef(values);
   const editingRef = useRef<FieldKey | null>(null);
   const [editing, setEditing] = useState<FieldKey | null>(null);
   const [saving, setSaving] = useState<FieldKey | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    api.getProfile().then((profile) => {
+      const synced: Record<FieldKey, string> = {
+        prenom:         profile?.prenom         || "",
+        nom:            profile?.nom            || "",
+        date_naissance: profile?.date_naissance || "",
+        telephone:      profile?.telephone      || "",
+        email:          user.email              ?? "",
+        password:       "",
+      };
+      valuesRef.current = synced;
+      setValues(synced);
+    }).catch(() => {});
+  }, [user?.id]);
 
   const handleChangeText = (key: FieldKey, text: string) => {
     const updated = { ...valuesRef.current, [key]: text };
@@ -132,8 +145,7 @@ export default function PersonalInfoScreen() {
 
     try {
       if (METADATA_KEYS.includes(key)) {
-        const { error } = await supabase.auth.updateUser({ data: { [key]: value } });
-        if (error) throw error;
+        await api.updateProfile({ [key]: value || null });
       } else if (key === "email") {
         if (!value) return;
         const { error } = await supabase.auth.updateUser({ email: value });
@@ -141,8 +153,7 @@ export default function PersonalInfoScreen() {
       } else if (key === "password") {
         if (value.length < 6) {
           setValues((v) => ({ ...v, password: "" }));
-          if (value.length > 0)
-            Alert.alert("Mot de passe trop court", "6 caractères minimum.");
+          if (value.length > 0) Alert.alert("Mot de passe trop court", "6 caractères minimum.");
           return;
         }
         const { error } = await supabase.auth.updateUser({ password: value });
@@ -150,21 +161,10 @@ export default function PersonalInfoScreen() {
         setValues((v) => ({ ...v, password: "" }));
       }
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Une erreur est survenue.";
-      Alert.alert("Erreur", msg);
+      Alert.alert("Erreur", e instanceof Error ? e.message : "Une erreur est survenue.");
     } finally {
       setSaving(null);
     }
-  };
-
-  const displayValue = (key: FieldKey): string => {
-    if (key === "password") return editing === "password" ? values.password : "••••••••••";
-    return values[key];
-  };
-
-  const handleTabPress = (tab: NavTab) => {
-    if (tab === "home") router.replace("/");
-    if (tab === "user") router.replace("/profile");
   };
 
   return (
@@ -189,8 +189,10 @@ export default function PersonalInfoScreen() {
             {FIELDS.map((field, index) => {
               const isEditing = editing === field.key;
               const isSaving = saving === field.key;
-              const val = displayValue(field.key);
               const isLast = index === FIELDS.length - 1;
+              const rawVal = field.key === "password"
+                ? (isEditing ? values.password : "")
+                : values[field.key];
 
               return (
                 <View key={field.key}>
@@ -199,27 +201,32 @@ export default function PersonalInfoScreen() {
                       {field.renderIcon(isSaving ? colors.primary : colors.muted)}
                     </View>
 
-                    {isEditing ? (
-                      <TextInput
-                        ref={(r) => { inputRefs.current[field.key] = r; }}
-                        style={styles.input}
-                        value={values[field.key]}
-                        onChangeText={(t) => handleChangeText(field.key, t)}
-                        onBlur={() => saveField(field.key)}
-                        secureTextEntry={field.secure}
-                        keyboardType={field.keyboard ?? "default"}
-                        autoCapitalize="none"
-                        returnKeyType="done"
-                        onSubmitEditing={() => saveField(field.key)}
-                      />
-                    ) : (
-                      <Text
-                        style={[styles.value, !val && styles.valuePlaceholder]}
-                        numberOfLines={1}
-                      >
-                        {val || " "}
-                      </Text>
-                    )}
+                    <View style={styles.rowContent}>
+                      <Text style={styles.fieldLabel}>{field.label}</Text>
+                      {isEditing ? (
+                        <TextInput
+                          ref={(r) => { inputRefs.current[field.key] = r; }}
+                          style={styles.input}
+                          value={values[field.key]}
+                          onChangeText={(t) => handleChangeText(field.key, t)}
+                          onBlur={() => saveField(field.key)}
+                          secureTextEntry={field.secure}
+                          keyboardType={field.keyboard ?? "default"}
+                          autoCapitalize="none"
+                          returnKeyType="done"
+                          onSubmitEditing={() => saveField(field.key)}
+                        />
+                      ) : (
+                        <Text
+                          style={[styles.value, !rawVal && styles.valuePlaceholder]}
+                          numberOfLines={1}
+                        >
+                          {field.key === "password"
+                            ? "••••••••••"
+                            : rawVal || "Non configuré"}
+                        </Text>
+                      )}
+                    </View>
 
                     <TouchableOpacity
                       onPress={() => (isEditing ? saveField(field.key) : startEdit(field.key))}
@@ -239,7 +246,7 @@ export default function PersonalInfoScreen() {
           </View>
         </ScrollView>
 
-        <BottomNav active="user" onPress={handleTabPress} />
+        <BottomNav />
       </View>
     </KeyboardAvoidingView>
   );
@@ -274,25 +281,37 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 18,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    minHeight: 58,
+    minHeight: 64,
   },
   rowIcon: {
     width: 22,
     marginRight: spacing.md,
     alignItems: "center",
   },
-  value: {
+  rowContent: {
     flex: 1,
+    gap: 2,
+  },
+  fieldLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: colors.muted,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  value: {
     fontSize: 15,
     color: colors.textDark,
+    fontWeight: "500",
   },
   valuePlaceholder: {
-    color: "transparent",
+    color: colors.muted,
+    fontWeight: "400",
+    fontStyle: "italic",
   },
   input: {
-    flex: 1,
     fontSize: 15,
     color: colors.textPlum,
     padding: 0,

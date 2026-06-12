@@ -2,7 +2,6 @@ import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   Keyboard,
   KeyboardAvoidingView,
   Platform,
@@ -18,6 +17,8 @@ import * as Haptics from "expo-haptics";
 
 import { api } from "@/src/api/client";
 import { supabase } from "@/src/lib/supabase";
+import { generateProgram } from "@/src/algorithms/generateProgram";
+import { DooLogo } from "@/src/components/doo-logo";
 import { colors, radius, spacing } from "@/src/theme/colors";
 import type { Motivation } from "@/src/types";
 
@@ -334,15 +335,33 @@ export default function Onboarding() {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      const screen_time_min = to_minutes_per_day(screenTimeValue, screenTimePeriod);
+      const target_time_min = to_minutes_per_day(targetTimeValue, targetTimePeriod);
+      const started_at = new Date().toISOString().split('T')[0];
+
       await api.saveUserProfile({
         user_id: user!.id,
-        screen_time_min: to_minutes_per_day(screenTimeValue, screenTimePeriod),
-        target_time_min: to_minutes_per_day(targetTimeValue, targetTimePeriod),
+        screen_time_min,
+        target_time_min,
         motivation: motivation!,
         reason: reason!,
         apps,
         scroll_moments,
+        started_at,
       });
+
+      const program = generateProgram(screen_time_min / 60, target_time_min / 60, motivation!, new Date());
+      const checkins = program.milestones.map((m) => ({
+        user_id: user!.id,
+        week_number: m.week,
+        week_start_date: m.startDate.toISOString().split('T')[0],
+        target_daily_minutes: Math.round(m.targetDailyHours * 60),
+        phase: m.phase,
+        reduction_from_previous_min: Math.round(m.reductionFromPrevious * 60),
+      }));
+      const { error: checkinsError } = await supabase.from('weekly_checkins').insert(checkins);
+      if (checkinsError) throw checkinsError;
+
       router.replace("/program" as never);
     } catch (err: unknown) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -357,7 +376,7 @@ export default function Onboarding() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.logoZone}>
-        <Image source={require("@/assets/images/logo_doo.png")} />
+        <DooLogo width={160} />
       </View>
 
       <View style={styles.dots}>

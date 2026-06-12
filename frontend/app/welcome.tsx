@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
-import { Image, Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { DooLogo } from "@/src/components/doo-logo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -32,7 +33,7 @@ export default function Welcome() {
         style={styles.logoZone}
         entering={Platform.OS === "web" ? undefined : FadeInDown.delay(0).springify()}
       >
-        <Image source={require("@/assets/images/logo_doo.png")} />
+        <DooLogo width={160} />
       </Animated.View>
 
       {/* Boutons — ~28% */}

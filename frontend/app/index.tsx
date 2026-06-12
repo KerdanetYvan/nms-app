@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 
 import { api } from "@/src/api/client";
 import { supabase } from "@/src/lib/supabase";
-import { BottomNav, NavTab } from "@/src/components/bottom-nav";
+import { BottomNav } from "@/src/components/bottom-nav";
+import { DooLogo } from "@/src/components/doo-logo";
 import {
   Platform,
   ScrollView,
@@ -18,12 +19,6 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 
 import { colors, radius, spacing } from "@/src/theme/colors";
-import {
-  LIMIT_STORAGE_KEY,
-  SCROLL_GUARD_MINUTES,
-  getPermissionState,
-} from "@/src/utils/notifications";
-import { storage } from "@/src/utils/storage";
 
 type IconLib = "ion" | "mci";
 
@@ -107,10 +102,6 @@ export default function Home() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [profileChecked, setProfileChecked] = useState(false);
-  const [guardVisible, setGuardVisible] = useState(false);
-  const [guardOn, setGuardOn] = useState(false);
-  const [canAskAgain, setCanAskAgain] = useState(true);
-  const [limit, setLimit] = useState(SCROLL_GUARD_MINUTES);
 
   useEffect(() => {
     api.getUserProfile()
@@ -125,25 +116,12 @@ export default function Home() {
       .catch(() => setProfileChecked(true));
   }, []);
 
-  useEffect(() => {
-    getPermissionState().then((s) => setCanAskAgain(s.canAskAgain));
-    storage.getItem(LIMIT_STORAGE_KEY, SCROLL_GUARD_MINUTES).then((v) => {
-      if (typeof v === "number") setLimit(v);
-    });
-  }, []);
-  const [activeTab, setActiveTab] = useState<NavTab>("home");
-
   const onSelectContext = (btn: ContextButton) => {
     Haptics.selectionAsync();
     router.push({
       pathname: "/challenge",
       params: { context: btn.key, label: btn.label },
     });
-  };
-
-  const handleTabPress = (tab: NavTab) => {
-    setActiveTab(tab);
-    if (tab === "user") router.push("/profile");
   };
 
   if (!profileChecked) {
@@ -154,28 +132,7 @@ export default function Home() {
     <View style={[styles.container, { paddingTop: insets.top }]} testID="home-screen">
       <View style={styles.header}>
         <TouchableOpacity onPress={() => supabase.auth.signOut()} hitSlop={8}>
-          <Text style={styles.brand} testID="home-brand">
-            Doo
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.programBtn}
-          onPress={() => router.push("/program" as never)}
-          hitSlop={12}
-        >
-          <Ionicons name="bar-chart-outline" size={22} color={colors.muted} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.shieldBtn}
-          onPress={() => setGuardVisible(true)}
-          testID="open-guard-button"
-          hitSlop={12}
-        >
-          <Ionicons
-            name={guardOn ? "shield-checkmark" : "shield-outline"}
-            size={22}
-            color={guardOn ? colors.primary : colors.muted}
-          />
+          <DooLogo width={120} />
         </TouchableOpacity>
       </View>
 
@@ -208,7 +165,7 @@ export default function Home() {
         ))}
       </ScrollView>
 
-      <BottomNav active={activeTab} onPress={handleTabPress} />
+      <BottomNav />
     </View>
   );
 }
@@ -231,18 +188,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: colors.textPlum,
     letterSpacing: 1,
-  },
-  programBtn: {
-    position: "absolute",
-    left: 0,
-    top: spacing.md,
-    padding: spacing.xs,
-  },
-  shieldBtn: {
-    position: "absolute",
-    right: 0,
-    top: spacing.md,
-    padding: spacing.xs,
   },
   subtitle: {
     fontSize: 18,

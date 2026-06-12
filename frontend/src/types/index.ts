@@ -20,28 +20,53 @@ export type AnswerRecord = {
 
 export type Motivation = 'aggressive' | 'moderate' | 'gentle';
 
+export type Phase = 'intro' | 'reduction_main' | 'consolidation';
+
+export type Profile = {
+  id: string;
+  prenom: string | null;
+  nom: string | null;
+  date_naissance: string | null;
+  telephone: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type UserProfile = {
   user_id: string;
   screen_time_min: number;
   target_time_min: number;
   motivation: Motivation;
-  program?: unknown;
   reason?: string | null;
   apps?: string[];
   scroll_moments?: string[];
+  started_at?: string | null;
+  status?: 'active' | 'paused' | 'completed' | 'abandoned';
+  pause_until?: string | null;
+  consecutive_misses?: number;
+};
+
+export type WeekCheckin = {
+  id: string;
+  user_id: string;
+  week_number: number;
+  week_start_date: string;
+  target_daily_minutes: number;
+  phase: Phase;
+  reduction_from_previous_min: number;
+  screen_time_reported_minutes: number | null;
+  goal_met: boolean | null;
+  challenge_completed: boolean;
+  created_at: string;
+  updated_at: string;
 };
 
 // ─── Algo 2 : Ajustement en cas de dépassement ───────────────────────────────
 
-/** Ce qui a déclenché la session d'ajustement */
 export type RelapseTrigger =
-  | 'silent_flag'        // un seul dépassement, pas de mention de régression côté UI
-  | 'consecutive_misses'; // 2 semaines ratées consécutives → dialogue utilisateur
+  | 'silent_flag'
+  | 'consecutive_misses';
 
-/**
- * Raison choisie par l'utilisateur + sous-décisions selon la branche.
- * Union discriminée : le champ `difficulty` sert de discriminant.
- */
 export type RelapseDecision =
   | { difficulty: 'lack_motivation'; profileDowngradeAccepted: boolean }
   | { difficulty: 'too_difficult' }
@@ -50,34 +75,20 @@ export type RelapseDecision =
   | { difficulty: 'busy_period' }
   | { difficulty: 'dont_know' };
 
-/** Entrée complète de l'algo d'ajustement */
 export type RelapseInput = {
   trigger: RelapseTrigger;
-  /** Temps d'écran réel (en heures) pour chacun des 14 derniers jours */
   lastTwoWeeksUsage: number[];
   currentMotivation: Motivation;
   decision: RelapseDecision;
-  /** Champ libre, jamais obligatoire */
   optionalFeedback?: string;
 };
 
-/**
- * Ce que produit l'algo d'ajustement.
- * newBaseline et newMotivation sont réinjectés dans generateProgram (Algo 1).
- */
 export type AdjustmentResult = {
-  /** Nouveau point de départ : moyenne de l'usage réel sur 14 jours */
   newBaseline: number;
-  /** Profil après éventuel déclassement */
   newMotivation: Motivation;
-  /** Semaines ajoutées à la durée du programme (0 = pas d'extension) */
   extensionWeeks: number;
-  /** Semaines de pause avant reprise automatique (0 = pas de pause) */
   pauseWeeks: number;
-  /** Toujours remis à 0 après un ajustement réussi */
   consecutiveMisses: 0;
-  /** true = déclenchement silencieux, l'UI ne doit pas mentionner de régression */
   silentReset: boolean;
-  /** Message de confirmation à afficher à l'utilisateur */
   message: string;
 };

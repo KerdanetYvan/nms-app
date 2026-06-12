@@ -1,15 +1,16 @@
+import { usePathname, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Dimensions, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Dimensions, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import * as NavigationBar from "expo-navigation-bar";
 import Animated, {
   Easing,
-  FadeInDown,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
 import Svg, { Circle, Path } from "react-native-svg";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, radius, spacing } from "@/src/theme/colors";
+import { colors, radius } from "@/src/theme/colors";
 
 const PILL_HEIGHT = 70;
 const INDICATOR_SIZE = 52;
@@ -17,6 +18,24 @@ const TAB_COUNT = 4;
 
 export type NavTab = "home" | "program" | "user" | "settings";
 const TAB_ORDER: NavTab[] = ["home", "program", "user", "settings"];
+
+const PATHNAME_TO_TAB: Record<string, NavTab> = {
+  "/": "home",
+  "/program": "program",
+  "/profile": "user",
+  "/personal-info": "user",
+  "/settings": "settings",
+  "/notifications-settings": "settings",
+  "/terms": "settings",
+  "/privacy": "settings",
+};
+
+const TAB_ROUTES: Partial<Record<NavTab, string>> = {
+  home: "/",
+  program: "/program",
+  user: "/profile",
+  settings: "/settings",
+};
 
 function indicatorX(index: number, tabWidth: number): number {
   return index * tabWidth + (tabWidth - INDICATOR_SIZE) / 2;
@@ -104,13 +123,21 @@ function TabIcon({ tab, active }: { tab: NavTab; active: boolean }) {
   return <SettingsIcon color={color} />;
 }
 
-type Props = {
-  active: NavTab;
-  onPress: (tab: NavTab) => void;
-};
+export function BottomNav() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const active: NavTab = PATHNAME_TO_TAB[pathname] ?? "home";
 
-export function BottomNav({ active, onPress }: Props) {
   const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+    // setBackgroundColorAsync n'est pas compatible avec edgeToEdge, mais
+    // setButtonStyleAsync fonctionne et est nécessaire pour garder les icônes
+    // de la barre de navigation en blanc sur le fond mauve du navBarFill.
+    NavigationBar.setButtonStyleAsync("light").catch(() => {});
+  }, []);
+
   const [pillWidth, setPillWidth] = useState(Dimensions.get("window").width);
   const tabWidth = pillWidth / TAB_COUNT;
   const indicatorPos = useSharedValue(indicatorX(TAB_ORDER.indexOf(active), tabWidth));
@@ -126,11 +153,16 @@ export function BottomNav({ active, onPress }: Props) {
     transform: [{ translateX: indicatorPos.value }],
   }));
 
+  const handlePress = (tab: NavTab) => {
+    if (tab === active) return;
+    const target = TAB_ROUTES[tab];
+    if (!target) return;
+    if (tab === "home") router.replace(target as never);
+    else router.push(target as never);
+  };
+
   return (
-    <Animated.View
-      entering={FadeInDown.duration(350)}
-      style={[styles.wrapper, { paddingBottom: insets.bottom }]}
-    >
+    <Animated.View style={styles.wrapper}>
       <View style={styles.pillShadow}>
         <View
           style={styles.pill}
@@ -141,7 +173,7 @@ export function BottomNav({ active, onPress }: Props) {
             <TouchableOpacity
               key={tab}
               style={styles.tab}
-              onPress={() => onPress(tab)}
+              onPress={() => handlePress(tab)}
               activeOpacity={0.9}
             >
               <TabIcon tab={tab} active={active === tab} />
@@ -149,6 +181,7 @@ export function BottomNav({ active, onPress }: Props) {
           ))}
         </View>
       </View>
+      <View style={[styles.navBarFill, { height: insets.bottom }]} />
     </Animated.View>
   );
 }
@@ -159,6 +192,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+  },
+  navBarFill: {
+    backgroundColor: colors.primary,
   },
   pillShadow: {
     borderTopLeftRadius: radius.lg,

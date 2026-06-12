@@ -1,7 +1,7 @@
 import { supabase } from '@/src/lib/supabase';
-import type { AnswerRecord, ChallengeResponse, ContextInfo, Motivation, UserProfile } from '@/src/types';
+import type { AnswerRecord, ChallengeResponse, ContextInfo, Motivation, Profile, UserProfile, WeekCheckin } from '@/src/types';
 
-export type { AnswerRecord, ChallengeResponse, ContextInfo, Motivation, UserProfile };
+export type { AnswerRecord, ChallengeResponse, ContextInfo, Motivation, Profile, UserProfile, WeekCheckin };
 
 export const api = {
   async getContexts(): Promise<ContextInfo[]> {
@@ -17,7 +17,6 @@ export const api = {
       .eq('context_key', context);
     if (error) throw error;
 
-    // Exclure le défi actuel pour le shuffle, avec fallback si tous exclus
     const pool = exclude ? data.filter((c) => c.text !== exclude) : data;
     const candidates = pool.length > 0 ? pool : data;
     const pick = candidates[Math.floor(Math.random() * candidates.length)];
@@ -36,7 +35,6 @@ export const api = {
   }): Promise<void> {
     const [{ data: { user } }, { data: ch, error: chErr }] = await Promise.all([
       supabase.auth.getUser(),
-      // Retrouver l'id du défi à partir de son texte pour respecter la FK
       supabase
         .from('challenges')
         .select('id')
@@ -55,19 +53,57 @@ export const api = {
     if (error) throw error;
   },
 
+  async getProfile(): Promise<Profile | null> {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .maybeSingle();
+    if (error) throw error;
+    return data as Profile | null;
+  },
+
+  async updateProfile(fields: Partial<Omit<Profile, 'id' | 'created_at' | 'updated_at'>>): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from('profiles')
+      .update(fields)
+      .eq('id', user!.id);
+    if (error) throw error;
+  },
+
   async getUserProfile(): Promise<UserProfile | null> {
     const { data, error } = await supabase
       .from('user_profiles')
-      .select('user_id, screen_time_min, target_time_min, motivation, program')
+      .select('user_id, screen_time_min, target_time_min, motivation, reason, apps, scroll_moments, started_at, status, pause_until, consecutive_misses')
       .maybeSingle();
     if (error) throw error;
     return data as UserProfile | null;
   },
 
-  async saveUserProfile(profile: Omit<UserProfile, 'program'>): Promise<void> {
+  async saveUserProfile(profile: Omit<UserProfile, 'status' | 'pause_until' | 'consecutive_misses'> & { started_at: string }): Promise<void> {
     const { error } = await supabase
       .from('user_profiles')
       .upsert(profile, { onConflict: 'user_id' });
+    if (error) throw error;
+  },
+
+  async getWeeklyCheckins(): Promise<WeekCheckin[]> {
+    const { data, error } = await supabase
+      .from('weekly_checkins')
+      .select('*')
+      .order('week_number', { ascending: true });
+    if (error) throw error;
+    return (data ?? []) as WeekCheckin[];
+  },
+
+  async updateWeeklyCheckin(
+    id: string,
+    fields: Partial<Pick<WeekCheckin, 'screen_time_reported_minutes' | 'goal_met' | 'challenge_completed'>>
+  ): Promise<void> {
+    const { error } = await supabase
+      .from('weekly_checkins')
+      .update(fields)
+      .eq('id', id);
     if (error) throw error;
   },
 

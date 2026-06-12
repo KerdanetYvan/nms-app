@@ -16,6 +16,7 @@ import Animated, { FadeIn } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 
 import { api } from "@/src/api/client";
+import { DooLogo } from "@/src/components/doo-logo";
 import { colors, radius, spacing } from "@/src/theme/colors";
 
 export default function Answer() {
@@ -58,7 +59,7 @@ export default function Answer() {
         >
           <Ionicons name="chevron-back" size={26} color={colors.textPlum} />
         </TouchableOpacity>
-        <Text style={styles.brand}>Doo</Text>
+        <DooLogo width={120} />
       </View>
 
       <KeyboardAvoidingView

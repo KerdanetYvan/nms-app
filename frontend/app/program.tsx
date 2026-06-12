@@ -24,11 +24,8 @@ import Svg, {
 } from "react-native-svg";
 
 import { api } from "@/src/api/client";
-import {
-  generateProgram,
-  type Phase,
-  type WeekMilestone,
-} from "@/src/algorithms/generateProgram";
+import { BottomNav } from "@/src/components/bottom-nav";
+import { generateProgram, type Phase, type WeekMilestone } from "@/src/algorithms/generateProgram";
 import { colors, radius, spacing } from "@/src/theme/colors";
 import type { Motivation, UserProfile } from "@/src/types";
 
@@ -306,14 +303,32 @@ export default function ProgramScreen() {
   const { width: screen_width } = useWindowDimensions();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [milestones, setMilestones] = useState<WeekMilestone[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api
-      .getUserProfile()
-      .then(setProfile)
-      .catch(() => setError("Impossible de charger le profil."))
+    Promise.all([api.getUserProfile(), api.getWeeklyCheckins()])
+      .then(([p, checkins]) => {
+        setProfile(p);
+        if (checkins.length > 0) {
+          setMilestones(
+            checkins.map((c) => ({
+              week: c.week_number,
+              startDate: new Date(c.week_start_date),
+              targetDailyHours: c.target_daily_minutes / 60,
+              phase: c.phase,
+              reductionFromPrevious: c.reduction_from_previous_min / 60,
+            }))
+          );
+        } else if (p) {
+          // Fallback pour les comptes existants sans weekly_checkins
+          const startDate = p.started_at ? new Date(p.started_at) : new Date();
+          const generated = generateProgram(p.screen_time_min / 60, p.target_time_min / 60, p.motivation, startDate);
+          setMilestones(generated.milestones);
+        }
+      })
+      .catch(() => setError("Impossible de charger le programme."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -325,20 +340,19 @@ export default function ProgramScreen() {
     );
   }
 
-  if (error || !profile) {
+  if (error || !profile || milestones.length === 0) {
     return (
       <View style={[styles.centered, { paddingTop: insets.top }]}>
-        <Text style={styles.error_text}>{error ?? "Profil introuvable."}</Text>
+        <Text style={styles.error_text}>{error ?? "Programme introuvable."}</Text>
       </View>
     );
   }
 
   const current_hours = profile.screen_time_min / 60;
   const target_hours = profile.target_time_min / 60;
-  const program = generateProgram(current_hours, target_hours, profile.motivation);
-  const phase_summaries = build_phase_summaries(program.milestones, current_hours);
+  const phase_summaries = build_phase_summaries(milestones, current_hours);
   const weeks_label =
-    program.totalWeeks === 1 ? "1 semaine" : `${program.totalWeeks} semaines`;
+    milestones.length === 1 ? "1 semaine" : `${milestones.length} semaines`;
 
   // card padding (spacing.md on each side) + scroll padding (spacing.lg on each side)
   const chart_width = screen_width - spacing.lg * 2 - spacing.md * 2;
@@ -357,7 +371,7 @@ export default function ProgramScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
           styles.scroll,
-          { paddingBottom: insets.bottom + spacing.xl },
+          { paddingBottom: insets.bottom + 94 },
         ]}
       >
         <Animated.View
@@ -377,7 +391,7 @@ export default function ProgramScreen() {
           style={styles.chart_card}
         >
           <ProgramChart
-            milestones={program.milestones}
+            milestones={milestones}
             current_hours={current_hours}
             target_hours={target_hours}
             chart_width={chart_width}
@@ -394,6 +408,7 @@ export default function ProgramScreen() {
           </Animated.View>
         ))}
       </ScrollView>
+      <BottomNav />
     </View>
   );
 }

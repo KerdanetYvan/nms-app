@@ -5,6 +5,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { Platform } from "react-native";
 import { useEffect, useRef } from "react";
 import { useFonts, Quicksand_400Regular, Quicksand_700Bold } from "@expo-google-fonts/quicksand";
+import { StatusBar } from "expo-status-bar";
 
 import { useIconFonts } from "@/src/hooks/use-icon-fonts";
 import { useAuth } from "@/src/hooks/use-auth";
@@ -43,20 +44,21 @@ export default function RootLayout() {
     }
   }, [loaded, error, sessionLoading]);
 
+  const lastNotificationResponse = Notifications.useLastNotificationResponse();
+
   // Tapping the "20 min" reminder opens the app on the Home screen.
   useEffect(() => {
     if (Platform.OS === "web") return;
-    const goHome = () => router.replace("/");
+    if (lastNotificationResponse && !handled.current) {
+      handled.current = true;
+      router.replace("/");
+    }
+  }, [lastNotificationResponse, router]);
 
-    Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (response && !handled.current) {
-        handled.current = true;
-        goHome();
-      }
-    });
-
+  useEffect(() => {
+    if (Platform.OS === "web") return;
     const sub = Notifications.addNotificationResponseReceivedListener(() => {
-      goHome();
+      router.replace("/");
     });
     return () => sub.remove();
   }, [router]);
@@ -67,7 +69,13 @@ export default function RootLayout() {
 
   return (
     <KeyboardProvider>
-      <Stack screenOptions={{ headerShown: false }} />
+      <StatusBar style="dark" />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" options={{ animation: "none" }} />
+        <Stack.Screen name="program" options={{ animation: "none" }} />
+        <Stack.Screen name="profile" options={{ animation: "none" }} />
+        <Stack.Screen name="settings" options={{ animation: "none" }} />
+      </Stack>
     </KeyboardProvider>
   );
 }

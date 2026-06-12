@@ -2,7 +2,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
   ActivityIndicator,
-  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -17,6 +16,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 
 import { Ionicons } from "@expo/vector-icons";
+import { DooLogo } from "@/src/components/doo-logo";
 
 import { supabase } from "@/src/lib/supabase";
 import { colors, radius, spacing } from "@/src/theme/colors";
@@ -144,7 +144,7 @@ export default function Auth() {
             style={styles.logoZone}
             entering={Platform.OS === "web" ? undefined : FadeInDown.delay(0).springify()}
           >
-            <Image source={require("@/assets/images/logo_doo.png")} />
+            <DooLogo width={160} />
           </Animated.View>
 
           {/* Champs */}
