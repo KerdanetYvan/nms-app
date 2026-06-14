@@ -80,10 +80,19 @@ export const api = {
     return data as UserProfile | null;
   },
 
-  async saveUserProfile(profile: Omit<UserProfile, 'status' | 'pause_until' | 'consecutive_misses'> & { started_at: string }): Promise<void> {
+  async saveUserProfile(profile: Omit<UserProfile, 'status' | 'pause_until' | 'consecutive_misses' | 'program'> & { started_at: string }): Promise<void> {
     const { error } = await supabase
       .from('user_profiles')
       .upsert(profile, { onConflict: 'user_id' });
+    if (error) throw error;
+  },
+
+  async saveProgram(program: object): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({ program: JSON.parse(JSON.stringify(program)) })
+      .eq('user_id', user!.id);
     if (error) throw error;
   },
 

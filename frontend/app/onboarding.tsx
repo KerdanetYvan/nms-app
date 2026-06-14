@@ -339,6 +339,8 @@ export default function Onboarding() {
       const target_time_min = to_minutes_per_day(targetTimeValue, targetTimePeriod);
       const started_at = new Date().toISOString().split('T')[0];
 
+      const program = generateProgram(screen_time_min / 60, target_time_min / 60, motivation!, new Date());
+
       await api.saveUserProfile({
         user_id: user!.id,
         screen_time_min,
@@ -350,7 +352,8 @@ export default function Onboarding() {
         started_at,
       });
 
-      const program = generateProgram(screen_time_min / 60, target_time_min / 60, motivation!, new Date());
+      await api.saveProgram(program);
+
       const checkins = program.milestones.map((m) => ({
         user_id: user!.id,
         week_number: m.week,
@@ -359,13 +362,19 @@ export default function Onboarding() {
         phase: m.phase,
         reduction_from_previous_min: Math.round(m.reductionFromPrevious * 60),
       }));
-      const { error: checkinsError } = await supabase.from('weekly_checkins').insert(checkins);
+      const { error: checkinsError } = await supabase
+        .from('weekly_checkins')
+        .upsert(checkins, { onConflict: 'user_id,week_number' });
       if (checkinsError) throw checkinsError;
 
       router.replace("/program" as never);
     } catch (err: unknown) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      setError(err instanceof Error ? err.message : "Une erreur est survenue.");
+      const msg =
+        err instanceof Error ? err.message :
+        (err && typeof err === 'object' && 'message' in err) ? String((err as { message: unknown }).message) :
+        "Une erreur est survenue.";
+      setError(msg);
     } finally {
       setLoading(false);
     }

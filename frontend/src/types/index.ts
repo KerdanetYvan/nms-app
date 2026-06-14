@@ -44,6 +44,7 @@ export type UserProfile = {
   status?: 'active' | 'paused' | 'completed' | 'abandoned';
   pause_until?: string | null;
   consecutive_misses?: number;
+  program?: object | null;
 };
 
 export type WeekCheckin = {
