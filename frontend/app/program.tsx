@@ -407,6 +407,18 @@ export default function ProgramScreen() {
             <PhaseCard summary={summary} />
           </Animated.View>
         ))}
+
+        <Animated.View
+          entering={Platform.OS === "web" ? undefined : FadeInDown.delay(160 + phase_summaries.length * 60).springify()}
+        >
+          <TouchableOpacity
+            style={styles.adjust_btn}
+            onPress={() => router.push("/relapse" as never)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.adjust_btn_text}>Ajuster le programme</Text>
+          </TouchableOpacity>
+        </Animated.View>
       </ScrollView>
       <BottomNav />
     </View>
@@ -557,5 +569,18 @@ const styles = StyleSheet.create({
     color: colors.muted,
     lineHeight: 18,
     marginTop: 2,
+  },
+  adjust_btn: {
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+    borderRadius: radius.md,
+    paddingVertical: 14,
+    alignItems: "center",
+    backgroundColor: "transparent",
+  },
+  adjust_btn_text: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.primary,
   },
 });
