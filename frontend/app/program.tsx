@@ -410,13 +410,21 @@ export default function ProgramScreen() {
 
         <Animated.View
           entering={Platform.OS === "web" ? undefined : FadeInDown.delay(160 + phase_summaries.length * 60).springify()}
+          style={styles.action_row}
         >
           <TouchableOpacity
-            style={styles.adjust_btn}
+            style={[styles.action_btn, styles.action_btn_outline]}
             onPress={() => router.push("/relapse" as never)}
             activeOpacity={0.85}
           >
-            <Text style={styles.adjust_btn_text}>Ajuster le programme</Text>
+            <Text style={styles.action_btn_outline_text}>Ajuster</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.action_btn, styles.action_btn_primary]}
+            onPress={() => router.push("/acceleration" as never)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.action_btn_primary_text}>Accélérer</Text>
           </TouchableOpacity>
         </Animated.View>
       </ScrollView>
@@ -570,17 +578,32 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginTop: 2,
   },
-  adjust_btn: {
-    borderWidth: 1.5,
-    borderColor: colors.primary,
+  action_row: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  action_btn: {
+    flex: 1,
     borderRadius: radius.md,
     paddingVertical: 14,
     alignItems: "center",
+  },
+  action_btn_outline: {
+    borderWidth: 1.5,
+    borderColor: colors.primary,
     backgroundColor: "transparent",
   },
-  adjust_btn_text: {
+  action_btn_primary: {
+    backgroundColor: colors.primary,
+  },
+  action_btn_outline_text: {
     fontSize: 15,
     fontWeight: "700",
     color: colors.primary,
+  },
+  action_btn_primary_text: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.white,
   },
 });
