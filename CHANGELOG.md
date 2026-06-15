@@ -4,6 +4,43 @@
 
 ### Added
 
+- **Écran profil** (`app/profile.tsx`) — avatar, nom, email, accès aux paramètres et informations personnelles.
+- **Écran paramètres** (`app/settings.tsx`) — déconnexion, navigation vers informations personnelles, notifications et pages légales.
+- **Informations personnelles** (`app/personal-info.tsx`) — édition du prénom, nom, date de naissance et numéro de téléphone, icônes SVG custom par champ.
+- **Paramètres notifications** (`app/notifications-settings.tsx`) — activation/désactivation des notifications de rappel avec sélection de l'heure.
+- **Politique de confidentialité** (`app/privacy.tsx`) — page légale in-app conforme RGPD (10 sections : responsable, données collectées, finalités, base légale, hébergement, partage, conservation, droits, notifications, modifications).
+- **Conditions d'utilisation** (`app/terms.tsx`) — page légale in-app (9 sections).
+- **Composant `DooLogo`** (`src/components/doo-logo.tsx`) — SVG du logo Doo réutilisable en composant React Native.
+- **Composant `EyesLogo`** (`src/components/eyes-logo.tsx`) — illustration yeux animée utilisée dans les écrans défi et réponse.
+- **`BottomNav`** — refacto avec accès au profil, icônes mises à jour.
+- **Landing page** (`landing/`) — site statique Vercel avec waitlist (Resend), page politique de confidentialité publique (`privacy.html`) et page de demande de suppression de compte (`delete-account.html` + `api/delete-account.js`).
+- **Gestion du programme utilisateur** — `onboarding.tsx` sauvegarde le programme généré en base ; `client.ts` expose `saveUserProgram` et `getUserProgram` ; type `UserProfile.programme` ajouté.
+
+### Fixed
+
+- **Clavier sur `confirm-email`** — suppression de la bulle icône qui déclenchait un rerender bloquant la saisie OTP.
+- **`EyesLookingDown`** — réintégration après régression lors du refacto de `challenge.tsx`.
+
+### Changed
+
+- **`app/challenge.tsx`** — réorganisation de l'interface, intégration du composant Eyes.
+- **`app/answer.tsx`** — intégration `EyesSmiling` + `EyesLogo`, mise à jour de l'affichage des réponses.
+- **`app/onboarding.tsx`** — sauvegarde du programme généré à la fin du flow.
+
+### Removed
+
+- **`expo-location`** — permission de localisation non utilisée en v1, supprimée pour éviter une déclaration inutile sur le Play Store.
+- **`expo-image-picker`** — installé par erreur, jamais utilisé, supprimé (évite la permission `READ_MEDIA_IMAGES`).
+- **`src/utils/permissions.ts`** — fonctions de localisation supprimées ; seul `openUsageAccessSettings` conservé.
+- **`src/hooks/use-permissions.ts`** — simplifié, n'expose plus que `openUsageAccess`.
+- **Images Expo par défaut** — `app-image.png`, `partial-react-logo.png`, `react-logo*.png` supprimées des assets.
+
+---
+
+## [0.3.0] — Profil, settings, Play Store
+
+### Added
+
 - **Confirmation e-mail OTP** (`app/confirm-email.tsx`) — nouvel écran affiché après inscription : saisie du code à N chiffres reçu par mail, appel `supabase.auth.verifyOtp`, bouton "Renvoyer le code" (`supabase.auth.resend`). Gestion du collé (paste) et auto-focus case par case.
 - **Police Quicksand** — `@expo-google-fonts/quicksand` chargée dans `_layout.tsx` (`Quicksand_400Regular`, `Quicksand_700Bold`). Utilisée sur les labels de formulaire dans `auth.tsx`.
 - **Picker drum-roll** (`onboarding.tsx`, steps 1 & 2) — remplace les inputs texte pour la saisie du temps d'écran et de l'objectif. Deux colonnes `ScrollView` snappées verticalement (heures / période : jour, semaine, mois). Sélection automatique de la valeur centrée. Conversion en minutes/jour via `to_minutes_per_day` avant sauvegarde.
@@ -12,6 +49,7 @@
 ### Fixed
 
 - **Picker drum-roll — scroll lent sans momentum** — `onMomentumScrollEnd` ne se déclenche pas sur Android quand l'utilisateur relâche sans "flick". Ajout d'un fallback `onScrollEndDrag` avec timer (60 ms) annulé par `onMomentumScrollBegin` si le momentum démarre quand même.
+- **`app.json`** — slug/scheme `frontend` → `doo`, package `com.soblito.frontend` → `app.doo`, `userInterfaceStyle` `automatic` → `light`, `backgroundColor` splash + adaptive icon `#000` → `#FDFBF0`.
 
 ### Changed
 

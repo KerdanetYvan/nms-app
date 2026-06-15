@@ -1,36 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
-import { Platform } from "react-native";
-import {
-  getLocationPermissionState,
-  requestLocationPermission,
-  openUsageAccessSettings,
-} from "@/src/utils/permissions";
-
-type PermState = { granted: boolean; canAskAgain: boolean };
+import { useCallback } from "react";
+import { openUsageAccessSettings } from "@/src/utils/permissions";
 
 export function usePermissions() {
-  const [location, setLocation] = useState<PermState>({ granted: false, canAskAgain: true });
-
-  const refreshLocation = useCallback(async () => {
-    if (Platform.OS === "web") return;
-    const state = await getLocationPermissionState();
-    setLocation(state);
+  const openUsageAccess = useCallback(() => {
+    openUsageAccessSettings();
   }, []);
 
-  useEffect(() => {
-    refreshLocation();
-  }, [refreshLocation]);
-
-  const askLocation = useCallback(async (): Promise<boolean> => {
-    const granted = await requestLocationPermission();
-    await refreshLocation();
-    return granted;
-  }, [refreshLocation]);
-
-  return {
-    location,
-    askLocation,
-    openUsageAccessSettings,
-    refreshLocation,
-  };
+  return { openUsageAccess };
 }

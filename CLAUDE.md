@@ -118,28 +118,34 @@ Conventions et règles de développement pour le projet Doo.
 
 ```text
 frontend/
-├── app/                    — screens Expo Router (un fichier = une route)
-│   ├── _layout.tsx         — layout racine, garde de session auth
-│   ├── welcome.tsx         — landing page (utilisateurs non connectés)
-│   ├── auth.tsx            — login / register
-│   ├── confirm-email.tsx   — saisie du code OTP de confirmation e-mail (route publique)
-│   ├── onboarding.tsx      — formulaire d'onboarding 6 étapes (première connexion)
-│   ├── index.tsx           — accueil, sélection du contexte
-│   ├── program.tsx         — visualisation du programme de réduction
-│   ├── challenge.tsx       — affichage du défi
-│   └── answer.tsx          — saisie de la réponse
+├── app/                         — screens Expo Router (un fichier = une route)
+│   ├── _layout.tsx              — layout racine, garde de session auth
+│   ├── welcome.tsx              — landing page (utilisateurs non connectés)
+│   ├── auth.tsx                 — login / register
+│   ├── confirm-email.tsx        — saisie du code OTP de confirmation e-mail (route publique)
+│   ├── onboarding.tsx           — formulaire d'onboarding 6 étapes (première connexion)
+│   ├── index.tsx                — accueil, sélection du contexte
+│   ├── program.tsx              — visualisation du programme de réduction
+│   ├── challenge.tsx            — affichage du défi
+│   ├── answer.tsx               — saisie de la réponse
+│   ├── profile.tsx              — profil utilisateur
+│   ├── settings.tsx             — paramètres (notifications, infos perso, légal, déconnexion)
+│   ├── personal-info.tsx        — édition des informations personnelles
+│   ├── notifications-settings.tsx — paramètres de notifications
+│   ├── privacy.tsx              — politique de confidentialité (RGPD)
+│   └── terms.tsx                — conditions d'utilisation
 ├── assets/
-│   ├── fonts/              — polices custom
-│   └── images/             — icônes, splash, adaptive icon
+│   ├── fonts/                   — polices custom
+│   └── images/                  — icônes, splash, adaptive icon
 └── src/
-    ├── algorithms/         — logique métier pure (sans UI ni dépendances RN)
-    ├── api/                — client Supabase (requêtes vers la BDD)
-    ├── components/         — composants React Native réutilisables
-    ├── hooks/              — hooks custom (use-auth, use-icon-fonts...)
-    ├── lib/                — singletons et clients tiers (supabase.ts)
-    ├── theme/              — design tokens (colors.ts, global-styles.ts)
-    ├── types/              — types TypeScript partagés (index.ts)
-    └── utils/              — fonctions utilitaires (notifications, storage...)
+    ├── algorithms/              — logique métier pure (sans UI ni dépendances RN)
+    ├── api/                     — client Supabase (requêtes vers la BDD)
+    ├── components/              — composants React Native réutilisables (BottomNav, DooLogo, EyesLogo)
+    ├── hooks/                   — hooks custom (use-auth, use-icon-fonts, use-permissions)
+    ├── lib/                     — singletons et clients tiers (supabase.ts)
+    ├── theme/                   — design tokens (colors.ts, global-styles.ts)
+    ├── types/                   — types TypeScript partagés (index.ts)
+    └── utils/                   — fonctions utilitaires (notifications, storage, permissions)
 ```
 
 **Règles de placement :**
@@ -166,7 +172,7 @@ frontend/
 
 ```bash
 cd frontend
-yarn start
+expo start
 ```
 
 Toutes les commandes frontend se lancent depuis `frontend/`, jamais depuis la racine du repo.

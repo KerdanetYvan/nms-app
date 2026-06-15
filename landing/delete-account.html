@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Demander la suppression de votre compte Doo.">
+  <title>Doo — Supprimer mon compte</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #FDFBF0;
+      --primary:   #766675;
+      --off-white: #F1ECDD;
+      --beige:     #E6D2B5;
+      --text-dark: #3D3540;
+      --text-plum: #4A3F4A;
+      --muted:     #9B8F99;
+      --shadow:    rgba(118, 102, 117, 0.18);
+      --danger:    #C0504D;
+    }
+
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background-color: var(--bg);
+      color: var(--text-dark);
+      line-height: 1.6;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 40px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    nav a.back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    nav a.back:hover { color: var(--primary); }
+
+    main {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 16px 24px 96px;
+    }
+
+    h1 {
+      font-size: clamp(24px, 4vw, 32px);
+      font-weight: 800;
+      color: var(--text-plum);
+      margin-bottom: 12px;
+    }
+
+    .intro {
+      font-size: 15px;
+      color: var(--muted);
+      font-weight: 500;
+      line-height: 1.7;
+      margin-bottom: 32px;
+    }
+
+    .warning {
+      background: #FDF3F3;
+      border: 1.5px solid #E8BEBE;
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 32px;
+      font-size: 14px;
+      color: var(--danger);
+      font-weight: 600;
+      line-height: 1.6;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-plum);
+      margin-bottom: 8px;
+    }
+
+    input[type="email"] {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 15px 18px;
+      border: 1.5px solid var(--beige);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--text-dark);
+      outline: none;
+      width: 100%;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+    input[type="email"]:focus { border-color: var(--primary); }
+
+    textarea {
+      font-family: 'Quicksand', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      padding: 15px 18px;
+      border: 1.5px solid var(--beige);
+      border-radius: 14px;
+      background: #fff;
+      color: var(--text-dark);
+      outline: none;
+      width: 100%;
+      margin-bottom: 24px;
+      resize: vertical;
+      min-height: 100px;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: var(--primary); }
+
+    .field-hint {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+      margin-top: -10px;
+      margin-bottom: 16px;
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+      font-family: 'Quicksand', sans-serif;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 16px 32px;
+      border-radius: 16px;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+      box-shadow: 0 4px 18px rgba(192, 80, 77, 0.25);
+      transition: opacity 0.2s;
+    }
+    .btn-danger:hover { opacity: 0.88; }
+    .btn-danger:disabled { opacity: 0.5; cursor: default; }
+
+    .success-box {
+      display: none;
+      background: var(--off-white);
+      border-radius: 16px;
+      padding: 28px 24px;
+      text-align: center;
+    }
+
+    .success-box p {
+      font-size: 15px;
+      color: var(--muted);
+      font-weight: 500;
+      line-height: 1.7;
+    }
+
+    .success-box strong {
+      display: block;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-plum);
+      margin-bottom: 10px;
+    }
+
+    #error-msg {
+      display: none;
+      color: var(--danger);
+      font-weight: 600;
+      font-size: 14px;
+      margin-top: 14px;
+    }
+
+    hr {
+      max-width: 960px;
+      margin: 0 auto;
+      border: none;
+      border-top: 1.5px solid var(--off-white);
+    }
+
+    footer {
+      padding: 28px 40px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    footer a {
+      color: var(--muted);
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      nav { padding: 20px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="/" class="back">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Retour
+    </a>
+    <svg width="64" height="34" viewBox="0 0 381 199" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Doo">
+      <path d="M38.4254 196C34.748 196 31.6557 194.746 29.1484 192.239C26.6412 189.732 25.3875 186.64 25.3875 182.962V13.2198C25.3875 9.37533 26.6412 6.28303 29.1484 3.94291C31.6557 1.43564 34.748 0.182002 38.4254 0.182002H83.807C102.695 0.182002 119.494 4.36079 134.203 12.7184C148.913 21.0759 160.362 32.693 168.553 47.5695C176.743 62.2788 180.838 79.0775 180.838 97.9656C180.838 116.854 176.743 133.736 168.553 148.613C160.362 163.489 148.913 175.106 134.203 183.464C119.494 191.821 102.695 196 83.807 196H38.4254ZM83.807 172.933C97.6806 172.933 110.05 169.757 120.915 163.405C131.947 157.054 140.471 148.195 146.489 136.828C152.673 125.295 155.766 112.341 155.766 97.9656C155.766 83.5906 152.673 70.7199 146.489 59.3536C140.471 47.9873 131.947 39.1283 120.915 32.7765C110.05 26.4248 97.6806 23.2489 83.807 23.2489H51.4632V172.933H83.807Z" fill="#7A6678"/>
+      <ellipse cx="237.882" cy="145.035" rx="44.4639" ry="44.7439" stroke="#7A6678" stroke-width="17.9091"/>
+      <circle cx="257.891" cy="128.945" r="14.3273" fill="#7A6678"/>
+      <ellipse cx="327.428" cy="145.035" rx="44.4639" ry="44.7439" stroke="#7A6678" stroke-width="17.9091"/>
+      <circle cx="347.436" cy="128.945" r="14.3273" fill="#7A6678"/>
+    </svg>
+  </nav>
+
+  <main>
+    <h1>Supprimer mon compte</h1>
+    <p class="intro">
+      Tu peux demander la suppression de ton compte et de toutes tes données personnelles
+      en remplissant ce formulaire. Ta demande sera traitée dans un délai de 30 jours.
+    </p>
+
+    <div class="warning">
+      Cette action est irréversible. Ton compte, ta progression et toutes tes données
+      personnelles seront définitivement supprimés.
+    </div>
+
+    <form id="delete-form" onsubmit="handleSubmit(event)">
+      <label for="email">Adresse e-mail de ton compte</label>
+      <input type="email" id="email" placeholder="ton@email.com" required autocomplete="email">
+
+      <label for="reason">Raison (facultatif)</label>
+      <textarea id="reason" placeholder="Je n'utilise plus l'application..."></textarea>
+      <p class="field-hint">Aide-nous à comprendre pour améliorer Doo.</p>
+
+      <button type="submit" class="btn-danger" id="submit-btn">Demander la suppression</button>
+      <p id="error-msg">Une erreur s'est produite, réessaie dans un instant.</p>
+    </form>
+
+    <div class="success-box" id="success-box">
+      <strong>Demande reçue</strong>
+      <p>
+        Nous avons bien enregistré ta demande de suppression de compte.<br>
+        Tes données seront effacées dans un délai de 30 jours.<br><br>
+        Un e-mail de confirmation t'a été envoyé.
+      </p>
+    </div>
+  </main>
+
+  <hr>
+
+  <footer>
+    <p>&copy; 2025 Doo &nbsp;·&nbsp; <a href="/privacy.html">Politique de confidentialité</a></p>
+  </footer>
+
+  <script>
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const reason = document.getElementById('reason').value;
+      const btn = document.getElementById('submit-btn');
+      const errorMsg = document.getElementById('error-msg');
+
+      btn.disabled = true;
+      btn.textContent = '...';
+      errorMsg.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/delete-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, reason }),
+        });
+        if (res.ok) {
+          document.getElementById('delete-form').style.display = 'none';
+          document.getElementById('success-box').style.display = 'block';
+        } else {
+          throw new Error();
+        }
+      } catch {
+        errorMsg.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Demander la suppression';
+      }
+    }
+  </script>
+
+</body>
+</html>
