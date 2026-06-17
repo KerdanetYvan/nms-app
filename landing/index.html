@@ -366,6 +366,25 @@
       margin-top: 20px;
     }
 
+    /* ── CTA DIVIDER ────────────────────── */
+    .cta-divider {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin: 28px auto;
+      max-width: 320px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .cta-divider::before,
+    .cta-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--beige);
+    }
+
     /* ── DIVIDER ─────────────────────────── */
     .divider {
       max-width: 960px;
@@ -520,13 +539,14 @@
   <!-- WAITLIST -->
   <section class="cta-section" id="waitlist">
     <h2>Prêt à l'essayer ?</h2>
-    <p>
-      Doo arrive bientôt sur Android. Laisse ton adresse
-      pour être parmi les premiers à télécharger l'app.
-    </p>
+    <p>Télécharge l'APK directement ou laisse ton adresse pour être tenu informé des prochaines mises à jour.</p>
+    <a href="/api/download" class="btn-primary" style="font-size:17px;padding:18px 40px;">Télécharger l'APK</a>
+    <div class="cta-divider">
+      <span>ou</span>
+    </div>
     <form class="waitlist-form" onsubmit="handleSubmit(event)">
       <input type="email" placeholder="ton@email.com" required autocomplete="email">
-      <button type="submit" class="btn-primary">Je rejoins !</button>
+      <button type="submit" class="btn-ghost">Me tenir informé</button>
     </form>
     <p class="success-msg" id="success-msg">
       C'est noté, on te tient au courant !

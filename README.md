@@ -80,7 +80,8 @@ doo/
     ├── privacy.html                  # Politique de confidentialité publique
     ├── delete-account.html           # Formulaire de demande de suppression de compte
     └── api/
-        ├── waitlist.js               # Endpoint Vercel — inscription waitlist (Resend)
+        ├── waitlist.js               # Endpoint Vercel — inscription waitlist (Resend + email 3 étapes)
+        ├── download.js               # Endpoint Vercel — redirection vers APK_URL
         └── delete-account.js         # Endpoint Vercel — demande suppression (Resend)
 ```
 
@@ -168,8 +169,8 @@ vercel --prod
 
 Variables d'environnement à configurer sur Vercel :
 - `RESEND_API_KEY` — clé API Resend
-- `WAITLIST_RECIPIENT` — adresse email qui reçoit les notifications
-- `BETA_LINK` — lien de téléchargement de l'APK bêta
+- `WAITLIST_RECIPIENT` — adresse email qui reçoit les notifications d'inscription
+- `APK_URL` — lien de téléchargement de l'APK (mis à jour entre chaque build)
 
 ---
 

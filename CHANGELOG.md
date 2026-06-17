@@ -1,6 +1,26 @@
 # Changelog
 
-## [Unreleased]
+## [alpha-1.0.0] — 2026-06-17
+
+### Added
+
+- **Bouton de téléchargement APK** (`landing/index.html`) — bouton "Télécharger l'APK" dans la section CTA, servi via `/api/download` qui redirige vers la variable d'env `APK_URL` (modifiable entre chaque build sans toucher au code).
+- **Endpoint de téléchargement** (`landing/api/download.js`) — redirection 302 vers `APK_URL` ; répond 404 si la variable n'est pas définie.
+- **Groupe Google testeur** — `testeur-doo@googlegroups.com` configuré en accès public ; les testeurs rejoignent eux-mêmes le groupe via le lien dans l'email.
+
+### Changed
+
+- **Email beta Resend** (`landing/api/waitlist.js`) — restructuré en 3 étapes claires : (1) rejoindre le groupe Google `testeur-doo`, (2) activer l'accès testeur sur Play Store (liens Android et Web), (3) télécharger Doo. Layout table-based compatible Gmail, logo via bucket Supabase.
+- **Landing CTA** (`landing/index.html`) — bouton "Télécharger l'APK" en action principale, formulaire waitlist en secondaire avec séparateur "ou".
+
+### Removed
+
+- **Intégration Google Apps Script** (`landing/api/waitlist.js`) — suppression de l'ajout automatique au groupe Google via Apps Script (incompatible sans Google Workspace). Remplacé par l'auto-inscription via lien.
+- **Variables d'env** `GOOGLE_SCRIPT_URL`, `GOOGLE_SCRIPT_TOKEN`, `BETA_LINK` — plus utilisées, remplacées par `APK_URL`.
+
+---
+
+## [0.3.1] — Profil, settings, Play Store
 
 ### Added
 
