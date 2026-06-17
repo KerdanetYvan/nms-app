@@ -18,7 +18,6 @@ import Svg, {
   LinearGradient,
   Stop,
   Path,
-  Rect as SvgRect,
   Circle as SvgCircle,
   Line as SvgLine,
   Text as SvgText,
@@ -232,76 +231,74 @@ function OverviewChart({
   );
 }
 
-// ─── Daily chart ──────────────────────────────────────────────────────────────
+// ─── Week detail (detail tab) ─────────────────────────────────────────────────
 
-const DAY_LABELS = ["L", "Ma", "Me", "J", "V", "S", "D"];
-
-type DailyChartProps = {
+type WeekDetailProps = {
   milestone: WeekMilestone;
-  current_hours: number;
-  chart_width: number;
+  next_milestone: WeekMilestone | null;
 };
 
-function DailyChart({ milestone, current_hours, chart_width }: DailyChartProps) {
-  const inner_w = chart_width - PAD.left - PAD.right;
-  const inner_h = CHART_H - PAD.top - PAD.bottom;
+function WeekDetail({ milestone, next_milestone }: WeekDetailProps) {
+  const phase_cfg = PHASE_CONFIG[milestone.phase];
+  const week_end = new Date(milestone.startDate);
+  week_end.setDate(week_end.getDate() + 6);
 
-  const y_max = current_hours;
-  const y_min = 0;
-  const y_range = y_max - y_min;
-
-  const to_y = (h: number) => PAD.top + inner_h * (1 - h / y_range);
-  const bottom_y = PAD.top + inner_h;
-  const target_y = to_y(milestone.targetDailyHours);
-
-  const today = new Date();
-  const week_start = new Date(milestone.startDate);
-  const days_since = Math.floor((today.getTime() - week_start.getTime()) / (1000 * 60 * 60 * 24));
-  const today_idx = days_since >= 0 && days_since < 7 ? days_since : -1;
-
-  const bar_slot_w = inner_w / 7;
-  const bar_w = bar_slot_w * 0.58;
-  const bar_h = bottom_y - target_y;
-
-  const y_ticks = [0, 0.33, 0.67, 1.0].map((t) => t * y_max);
+  const reduction_min = next_milestone
+    ? Math.round((milestone.targetDailyHours - next_milestone.targetDailyHours) * 60)
+    : 0;
 
   return (
-    <Svg width={chart_width} height={CHART_H}>
-      {y_ticks.map((tick, i) => (
-        <SvgLine key={i} x1={PAD.left} y1={to_y(tick)} x2={PAD.left + inner_w} y2={to_y(tick)}
-          stroke={colors.beige} strokeWidth={1} />
-      ))}
+    <View style={styles.week_detail}>
+      {/* Phase + dates */}
+      <View style={styles.week_detail_header}>
+        <View style={[styles.week_detail_badge, { backgroundColor: phase_cfg.bg }]}>
+          <Text style={styles.week_detail_badge_text}>{phase_cfg.label}</Text>
+        </View>
+        <Text style={styles.week_detail_dates}>
+          {formatDate(milestone.startDate)} — {formatDate(week_end)}
+        </Text>
+      </View>
 
-      {/* Quota limit line */}
-      <SvgLine x1={PAD.left} y1={target_y} x2={PAD.left + inner_w} y2={target_y}
-        stroke={colors.primary} strokeWidth={1.5} strokeDasharray="5,4" strokeOpacity={0.75} />
+      {/* Two stat blocks */}
+      <View style={styles.week_stats_row}>
+        {/* Current quota */}
+        <View style={styles.week_stat_block}>
+          <Text style={styles.week_stat_label}>Quota journalier</Text>
+          <Text style={styles.week_stat_value}>{formatHours(milestone.targetDailyHours)}</Text>
+          <Text style={styles.week_stat_unit}>/ jour maximum</Text>
+        </View>
 
-      {DAY_LABELS.flatMap((label, i) => {
-        const bar_x = PAD.left + i * bar_slot_w + (bar_slot_w - bar_w) / 2;
-        const is_today = i === today_idx;
-        return [
-          <SvgRect key={`bar-${i}`}
-            x={bar_x} y={target_y} width={bar_w} height={bar_h > 0 ? bar_h : 2}
-            fill={is_today ? colors.primary : colors.secondary}
-            rx={4} opacity={is_today ? 0.85 : 0.45}
-          />,
-          <SvgText key={`day-${i}`}
-            x={bar_x + bar_w / 2} y={bottom_y + 14}
-            fontSize={10} textAnchor="middle"
-            fill={is_today ? colors.textPlum : colors.muted}
-            fontWeight={is_today ? "700" : "500"}>
-            {label}
-          </SvgText>,
-        ];
-      })}
+        <View style={styles.week_stat_sep} />
 
-      {y_ticks.map((tick, i) => (
-        <SvgText key={i} x={PAD.left - 7} y={to_y(tick) + 4} fontSize={10}
-          fill={colors.muted} textAnchor="end">
-          {formatHours(tick)}
-        </SvgText>
-      ))}
-    </Svg>
+        {/* Next week */}
+        <View style={styles.week_stat_block}>
+          {next_milestone ? (
+            <>
+              <Text style={styles.week_stat_label}>Semaine suivante</Text>
+              <Text style={styles.week_stat_value}>
+                {formatHours(next_milestone.targetDailyHours)}
+                <Text style={styles.week_stat_value_unit}>/j</Text>
+              </Text>
+              {reduction_min > 1 ? (
+                <Text style={[styles.week_stat_unit, { color: colors.secondary, fontWeight: "600" }]}>
+                  ↓ {reduction_min} min
+                </Text>
+              ) : (
+                <Text style={styles.week_stat_unit}>même quota</Text>
+              )}
+            </>
+          ) : (
+            <>
+              <Text style={styles.week_stat_label}>Objectif atteint</Text>
+              <Text style={styles.week_stat_value}>{formatHours(milestone.targetDailyHours)}</Text>
+              <Text style={[styles.week_stat_unit, { color: colors.rose, fontWeight: "600" }]}>
+                programme terminé
+              </Text>
+            </>
+          )}
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -415,6 +412,7 @@ export default function ProgramScreen() {
   const chart_width = screen_width - spacing.lg * 2 - spacing.md * 2;
 
   const active_milestone = selected_milestone ?? milestones[0];
+  const next_milestone = milestones.find((m) => m.week === active_milestone.week + 1) ?? null;
 
   const handle_milestone_press = (m: WeekMilestone) => {
     setSelectedMilestone(m);
@@ -448,10 +446,10 @@ export default function ProgramScreen() {
           style={styles.summary_card}
         >
           <Text style={styles.summary_range}>
-            {formatHours(current_hours * 7)} → {formatHours(target_hours * 7)}
+            {formatHours(current_hours)} → {formatHours(target_hours)}
           </Text>
           <Text style={styles.summary_meta}>
-            par semaine · {weeks_label} · {MOTIVATION_LABEL[profile.motivation]}
+            par jour · {weeks_label} · {MOTIVATION_LABEL[profile.motivation]}
           </Text>
         </Animated.View>
 
@@ -521,28 +519,17 @@ export default function ProgramScreen() {
                 })}
               </ScrollView>
 
-              <DailyChart
+              <WeekDetail
                 milestone={active_milestone}
-                current_hours={current_hours}
-                chart_width={chart_width}
+                next_milestone={next_milestone}
               />
-
-              {/* Quota summary */}
-              <View style={styles.quota_row}>
-                <View style={[styles.quota_dot, { backgroundColor: PHASE_CONFIG[active_milestone.phase].bg }]} />
-                <Text style={styles.quota_text}>
-                  Quota S{active_milestone.week} :{" "}
-                  <Text style={styles.quota_value}>{formatHours(active_milestone.targetDailyHours)}</Text>
-                  <Text style={styles.quota_unit}>/jour</Text>
-                </Text>
-              </View>
             </>
           )}
         </Animated.View>
 
         {phase_summaries.map((summary, i) => (
           <Animated.View
-            key={summary.phase}
+            key={`${summary.phase}-${i}`}
             entering={Platform.OS === "web" ? undefined : FadeInDown.delay(160 + i * 60).springify()}
           >
             <PhaseCard summary={summary} />
@@ -732,32 +719,72 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
 
-  // Quota row (detail tab)
-  quota_row: {
+  // Week detail (detail tab)
+  week_detail: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+    paddingTop: spacing.xs,
+    gap: spacing.sm,
+  },
+  week_detail_header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: spacing.md,
-    paddingTop: 4,
-    paddingBottom: spacing.xs,
+    justifyContent: "space-between",
   },
-  quota_dot: {
-    width: 8,
-    height: 8,
+  week_detail_badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
     borderRadius: radius.pill,
   },
-  quota_text: {
-    fontSize: 13,
-    color: colors.muted,
-  },
-  quota_value: {
-    fontSize: 13,
+  week_detail_badge_text: {
+    fontSize: 11,
     fontWeight: "700",
-    color: colors.textPlum,
+    color: colors.textDark,
   },
-  quota_unit: {
+  week_detail_dates: {
     fontSize: 12,
     color: colors.muted,
+  },
+  week_stats_row: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  week_stat_block: {
+    flex: 1,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    alignItems: "center",
+    gap: 3,
+  },
+  week_stat_sep: {
+    width: 1,
+    backgroundColor: colors.beige,
+    marginVertical: spacing.xs,
+  },
+  week_stat_label: {
+    fontSize: 11,
+    color: colors.muted,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  week_stat_value: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: colors.textPlum,
+    letterSpacing: 0.3,
+  },
+  week_stat_value_unit: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: colors.muted,
+    letterSpacing: 0,
+  },
+  week_stat_unit: {
+    fontSize: 12,
+    color: colors.muted,
+    textAlign: "center",
   },
 
   // Phase detail cards
