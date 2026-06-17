@@ -1,0 +1,10 @@
+{
+  "name": "usage-stats",
+  "version": "1.0.0",
+  "description": "Native Android module for UsageStatsManager",
+  "main": "src/index",
+  "types": "src/index",
+  "peerDependencies": {
+    "expo": "*"
+  }
+}
