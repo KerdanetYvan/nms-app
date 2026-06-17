@@ -62,6 +62,21 @@ export type WeekCheckin = {
   updated_at: string;
 };
 
+// ─── Algo 3 : Accélération en cas de réussite critique ───────────────────────
+
+export type AccelerationInput = {
+  currentMotivation: Motivation;
+  accelerationAccepted: boolean;
+};
+
+export type AccelerationResult = {
+  programChanged: boolean;
+  newMotivation: Motivation;
+  shortenConsolidation: boolean;
+  consecutiveSuccesses: 0;
+  message: string;
+};
+
 // ─── Algo 2 : Ajustement en cas de dépassement ───────────────────────────────
 
 export type RelapseTrigger =

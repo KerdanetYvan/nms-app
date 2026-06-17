@@ -1,6 +1,15 @@
 import { supabase } from '@/src/lib/supabase';
 import type { AnswerRecord, ChallengeResponse, ContextInfo, Motivation, Profile, UserProfile, WeekCheckin } from '@/src/types';
 
+type CheckinPayload = {
+  user_id: string;
+  week_number: number;
+  week_start_date: string;
+  target_daily_minutes: number;
+  phase: string;
+  reduction_from_previous_min: number;
+};
+
 export type { AnswerRecord, ChallengeResponse, ContextInfo, Motivation, Profile, UserProfile, WeekCheckin };
 
 export const api = {
@@ -85,6 +94,29 @@ export const api = {
       .from('user_profiles')
       .upsert(profile, { onConflict: 'user_id' });
     if (error) throw error;
+  },
+
+  async applyAdjustment(payload: {
+    newMotivation: Motivation;
+    newScreenTimeMin: number;
+    program: object;
+    checkins: CheckinPayload[];
+  }): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error: profileErr } = await supabase
+      .from('user_profiles')
+      .update({
+        motivation: payload.newMotivation,
+        screen_time_min: payload.newScreenTimeMin,
+        program: payload.program,
+      })
+      .eq('user_id', user!.id);
+    if (profileErr) throw profileErr;
+
+    const { error: checkinsErr } = await supabase
+      .from('weekly_checkins')
+      .upsert(payload.checkins, { onConflict: 'user_id,week_number' });
+    if (checkinsErr) throw checkinsErr;
   },
 
   async saveProgram(program: object): Promise<void> {
