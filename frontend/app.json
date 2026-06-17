@@ -49,8 +49,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "3099660f-e4ad-456b-a3fc-6d3d60bb4954"
+        "projectId": "95f3729a-81b0-4c2f-ac21-e127cba60b1e"
       }
-    }
+    },
+    "owner": "soblito"
   }
 }

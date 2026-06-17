@@ -11,6 +11,16 @@ export default async function handler(req, res) {
   const cleanEmail = email.trim().toLowerCase();
   const betaLink = process.env.BETA_LINK;
 
+  const scriptPayload = JSON.stringify({ email: cleanEmail, token: process.env.GOOGLE_SCRIPT_TOKEN });
+  const scriptInit = { method: "POST", headers: { "Content-Type": "application/json" }, body: scriptPayload, redirect: "manual" };
+  let scriptRes = await fetch(process.env.GOOGLE_SCRIPT_URL, scriptInit);
+  if (scriptRes.status === 301 || scriptRes.status === 302) {
+    const location = scriptRes.headers.get("location");
+    scriptRes = await fetch(location, scriptInit);
+  }
+  const scriptBody = await scriptRes.text().catch(() => "");
+  console.log("Apps Script response:", scriptRes.status, scriptBody);
+
   const [betaMail, notifMail] = await Promise.all([
     // Email envoyé à l'inscrit avec le lien bêta
     fetch("https://api.resend.com/emails", {
@@ -20,7 +30,7 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Doo <onboarding@resend.dev>",
+        from: "Doo <noreply@doo.kerdanetyvan.dev>",
         to: cleanEmail,
         subject: "Ton acces a la beta Doo",
         html: `
@@ -57,7 +67,7 @@ export default async function handler(req, res) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Doo Waitlist <onboarding@resend.dev>",
+        from: "Doo Waitlist <noreply@doo.kerdanetyvan.dev>",
         to: process.env.WAITLIST_RECIPIENT,
         subject: `Nouvelle inscription beta : ${cleanEmail}`,
         text: cleanEmail,
