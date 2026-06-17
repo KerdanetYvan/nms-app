@@ -42,3 +42,25 @@ export async function getAllAppsUsage(
   if (!UsageStats) return [];
   return UsageStats.getAllAppsUsage(startTime, endTime);
 }
+
+export function startMonitoring(
+  packageNames: string[],
+  labelNames: string[],
+  intervalSeconds: number = 5
+): void {
+  if (!UsageStats) return;
+  UsageStats.startMonitoring(packageNames, labelNames, intervalSeconds);
+}
+
+export function stopMonitoring(): void {
+  if (!UsageStats) return;
+  UsageStats.stopMonitoring();
+}
+
+export async function getForegroundApps(
+  startTime: number,
+  endTime: number
+): Promise<string[]> {
+  if (!UsageStats) return [];
+  return UsageStats.getForegroundApps(startTime, endTime);
+}

@@ -8,6 +8,7 @@ import android.os.Build
 import android.provider.Settings
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
+import expo.modules.usagestats.MonitoringService
 
 class UsageStatsModule : Module() {
   override fun definition() = ModuleDefinition {
@@ -67,6 +68,44 @@ class UsageStatsModule : Module() {
       stats?.filter { it.totalTimeInForeground > 0 }
         ?.map { mapOf("packageName" to it.packageName, "totalTime" to it.totalTimeInForeground) }
         ?: emptyList()
+    }
+
+    Function("startMonitoring") { packageNames: List<String>, labelNames: List<String>, intervalSeconds: Int ->
+      val context = appContext.reactContext ?: return@Function null
+      val intent = Intent(context, MonitoringService::class.java).apply {
+        putStringArrayListExtra("packageNames", ArrayList(packageNames))
+        putStringArrayListExtra("labelNames", ArrayList(labelNames))
+        putExtra("intervalMs", intervalSeconds * 1_000L)
+      }
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        context.startForegroundService(intent)
+      } else {
+        context.startService(intent)
+      }
+      null
+    }
+
+    Function("stopMonitoring") {
+      val context = appContext.reactContext ?: return@Function null
+      context.stopService(Intent(context, MonitoringService::class.java))
+      null
+    }
+
+    // Returns package names that had an ACTIVITY_RESUMED event in [startTime, endTime].
+    // Uses queryEvents for millisecond-precision detection, unlike queryUsageStats which aggregates by day.
+    AsyncFunction("getForegroundApps") { startTime: Long, endTime: Long ->
+      val context = appContext.reactContext ?: return@AsyncFunction emptyList<String>()
+      val manager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+      val usageEvents = manager.queryEvents(startTime, endTime)
+      val packages = mutableSetOf<String>()
+      val event = android.app.usage.UsageEvents.Event()
+      while (usageEvents.hasNextEvent()) {
+        usageEvents.getNextEvent(event)
+        if (event.eventType == android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED) {
+          packages.add(event.packageName)
+        }
+      }
+      packages.toList()
     }
   }
 }

@@ -9,6 +9,7 @@ import { StatusBar } from "expo-status-bar";
 import { useIconFonts } from "@/src/hooks/use-icon-fonts";
 import { useAuth } from "@/src/hooks/use-auth";
 import { useAppSurveillance } from "@/src/hooks/use-app-surveillance";
+import { useAppMonitoring } from "@/src/hooks/use-app-monitoring";
 import { UsagePermissionModal } from "@/src/components/usage-permission-modal";
 
 // Keep the native splash visible from cold start until icon fonts register.
@@ -25,6 +26,7 @@ export default function RootLayout() {
   const handled = useRef(false);
   const { session, loading: sessionLoading } = useAuth();
   const { isGranted, hasBeenPrompted, markPrompted, openSettings } = useAppSurveillance();
+  useAppMonitoring(isGranted, session);
 
   const appReady = (loaded || !!error) && !sessionLoading && fontsLoaded;
   const showPermModal = appReady && !!session && !isGranted && hasBeenPrompted === false;

@@ -31,6 +31,12 @@ export async function ensureNotificationPermission(): Promise<boolean> {
       vibrationPattern: [0, 250, 250, 250],
       lightColor: "#766675",
     });
+    await Notifications.setNotificationChannelAsync("surveillance", {
+      name: "Surveillance d'apps",
+      importance: Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 150],
+      lightColor: "#766675",
+    });
   }
 
   const current = await Notifications.getPermissionsAsync();
@@ -75,6 +81,22 @@ export async function cancelScrollGuard(): Promise<void> {
   } catch {
     // no-op: nothing scheduled
   }
+}
+
+export async function sendMonitoringAlert(appLabel: string): Promise<void> {
+  if (Platform.OS === "web") return;
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "Doo surveille",
+      body: `${appLabel} est ouvert — on garde un œil`,
+      channelId: "surveillance",
+      data: { screen: "/" },
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds: 1,
+    },
+  });
 }
 
 // Fires the exact reminder a couple seconds out so the flow can be demoed
