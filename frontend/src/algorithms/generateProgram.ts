@@ -36,9 +36,11 @@ export function generateProgram(
   motivation: Motivation,
   startDate = new Date()
 ): Program {
-  const weeklyRate    = WEEKLY_RATES[motivation];
-  const totalReduction  = currentScreenTime - targetScreenTime;
-  const phase1Reduction = weeklyRate * 0.5;
+  const weeklyRate     = WEEKLY_RATES[motivation];
+  const totalReduction = currentScreenTime - targetScreenTime;
+
+  // Réduction de la semaine d'intro = demi-rythme (résistance maximale en S1)
+  const introReduction = weeklyRate * 0.5;
 
   const milestones: WeekMilestone[] = [];
   let prevTarget = currentScreenTime;
@@ -57,29 +59,27 @@ export function generateProgram(
     prevTarget = targetDailyHours;
   };
 
-  // Phase 1 — 2 semaines à demi-rythme (Lally : résistance maximale en début de programme)
-  push(1, currentScreenTime - phase1Reduction, 'intro');
-  push(2, currentScreenTime - phase1Reduction, 'intro');
+  // Phase intro — 1 seule semaine de démarrage en douceur
+  push(1, currentScreenTime - introReduction, 'intro');
 
-  if (phase1Reduction >= totalReduction) {
-    // Cas limite : objectif atteint dès la phase 1 → 3 semaines de consolidation
-    for (let w = 3; w <= 5; w++) {
+  if (introReduction >= totalReduction) {
+    // Cas limite : objectif quasi-atteint dès S1 → consolidation directe
+    for (let w = 2; w <= 4; w++) {
       push(w, targetScreenTime, 'consolidation');
     }
   } else {
-    // Cas normal : phase 2 sur courbe asymptotique (Lally 2010), puis consolidation
-    // min 4 semaines pour éviter les pics extrêmes sur les courts programmes
-    const phase2Weeks = Math.max(4, Math.ceil((totalReduction - phase1Reduction) / weeklyRate));
+    // Phase réduction — courbe sigmoid (Lally 2010 : résistance décroissante)
+    // min 4 semaines pour garantir une courbe sans pic trop abrupts
+    const reductionWeeks = Math.max(4, Math.ceil((totalReduction - introReduction) / weeklyRate));
 
-    for (let n = 1; n <= phase2Weeks; n++) {
-      // progress va de 1/N à 1 : la dernière semaine atteint exactement l'objectif
-      const progress   = n / phase2Weeks;
-      const cumulative = phase1Reduction + (totalReduction - phase1Reduction) * normalized_sigmoid(progress);
-      push(2 + n, currentScreenTime - cumulative, 'reduction_main');
+    for (let n = 1; n <= reductionWeeks; n++) {
+      const progress   = n / reductionWeeks;
+      const cumulative = introReduction + (totalReduction - introReduction) * normalized_sigmoid(progress);
+      push(1 + n, currentScreenTime - cumulative, 'reduction_main');
     }
 
-    // 3 semaines de consolidation (Lally : ≥18 jours pour ancrer l'habitude)
-    const lastReductionWeek = 2 + phase2Weeks;
+    // Phase consolidation — 3 semaines (Lally : ≥18 jours pour ancrer l'habitude)
+    const lastReductionWeek = 1 + reductionWeeks;
     for (let w = lastReductionWeek + 1; w <= lastReductionWeek + 3; w++) {
       push(w, targetScreenTime, 'consolidation');
     }

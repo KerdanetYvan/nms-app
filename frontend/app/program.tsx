@@ -364,22 +364,17 @@ export default function ProgramScreen() {
   const [chart_tab, setChartTab] = useState<"overview" | "detail">("overview");
 
   useEffect(() => {
-    Promise.all([api.getUserProfile(), api.getWeeklyCheckins()])
-      .then(([p, checkins]) => {
+    api.getUserProfile()
+      .then((p) => {
         setProfile(p);
-        if (checkins.length > 0) {
-          setMilestones(
-            checkins.map((c) => ({
-              week: c.week_number,
-              startDate: new Date(c.week_start_date),
-              targetDailyHours: c.target_daily_minutes / 60,
-              phase: c.phase,
-              reductionFromPrevious: c.reduction_from_previous_min / 60,
-            }))
-          );
-        } else if (p) {
+        if (p) {
           const startDate = p.started_at ? new Date(p.started_at) : new Date();
-          const generated = generateProgram(p.screen_time_min / 60, p.target_time_min / 60, p.motivation, startDate);
+          const generated = generateProgram(
+            p.screen_time_min / 60,
+            p.target_time_min / 60,
+            p.motivation,
+            startDate,
+          );
           setMilestones(generated.milestones);
         }
       })
