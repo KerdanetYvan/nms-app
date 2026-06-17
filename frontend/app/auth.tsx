@@ -8,9 +8,9 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  KeyboardAvoidingView,
   View,
 } from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";

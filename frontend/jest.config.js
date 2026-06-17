@@ -8,4 +8,5 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
+  watchPathsToIgnore: ['<rootDir>/node_modules/.expo-.*'],
 };

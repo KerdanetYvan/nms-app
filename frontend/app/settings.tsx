@@ -31,6 +31,11 @@ export default function SettingsScreen() {
           <Text style={styles.rowLabel}>Notifications</Text>
           <Text style={styles.rowChevron}>›</Text>
         </TouchableOpacity>
+        <View style={styles.separator} />
+        <TouchableOpacity style={styles.row} onPress={() => router.push("/app-surveillance-settings")}>
+          <Text style={styles.rowLabel}>Surveillance d'apps</Text>
+          <Text style={styles.rowChevron}>›</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.section}>

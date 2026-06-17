@@ -10,7 +10,7 @@ Conventions et règles de développement pour le projet Doo.
 
 | Outil | Rôle |
 | --- | --- |
-| React Native + Expo (Managed Workflow) | Framework mobile iOS + Android |
+| React Native + Expo (Bare Workflow Android) | Framework mobile Android — `android/` généré et maintenu |
 | TypeScript | Typage strict — pas de JS pur |
 | Expo Router | Navigation — routing basé sur les fichiers |
 | Supabase | Auth + PostgreSQL + API auto-générée |
@@ -23,7 +23,7 @@ Conventions et règles de développement pour le projet Doo.
 - **Pas de backend custom** — tout passe par Supabase
 - **Pas de state manager global** — pas de Redux, Zustand ou Context API pour des données Supabase
 - **Pas de lib de composants UI** — pas de NativeWind, Tamagui, Gluestack, etc. Styles maison via `StyleSheet` + `src/theme/global-styles.ts`
-- **Pas de code natif custom** — Expo Managed Workflow uniquement, pas d'ejection
+- **Pas de code natif custom hors module UsageStats** — le seul module natif autorisé est `modules/usage-stats/` (Expo Modules API, Android uniquement)
 
 ---
 
@@ -37,7 +37,8 @@ Conventions et règles de développement pour le projet Doo.
 
 ### Règles Expo
 
-- Ne pas ejecter du Managed Workflow — pas de `expo eject`, pas de dossier `android/` ou `ios/` committé
+- Ne pas modifier `android/` manuellement sauf dans `android/app/src/main/AndroidManifest.xml` — les autres fichiers sont gérés par `expo prebuild`
+- Ne pas commiter `ios/` — on ne cible qu'Android
 - Ne pas installer une lib native sans vérifier sa compatibilité Expo au préalable
 - Ne pas modifier `app.json` sans vérifier que les fichiers référencés (icône, splash, assets) existent bien
 
@@ -119,6 +120,9 @@ Conventions et règles de développement pour le projet Doo.
 
 ```text
 frontend/
+├── android/                     — projet Android natif (généré par expo prebuild, committé)
+├── modules/
+│   └── usage-stats/             — module natif Expo (Kotlin) pour UsageStatsManager Android
 ├── app/                         — screens Expo Router (un fichier = une route)
 │   ├── _layout.tsx              — layout racine, garde de session auth
 │   ├── welcome.tsx              — landing page (utilisateurs non connectés)
@@ -157,6 +161,7 @@ frontend/
 - Un type partagé → `src/types/index.ts`
 - Une fonction utilitaire sans UI → `src/utils/`
 - De la logique métier pure (algorithmes, calculs, sans dépendances RN) → `src/algorithms/`
+- Du code natif Android lié à la surveillance d'apps → `modules/usage-stats/`
 
 ---
 
