@@ -96,6 +96,7 @@ Conventions et règles de développement pour le projet Doo.
 - Toujours destructurer `{ data, error }` et `throw error` si non-null — ne jamais ignorer silencieusement
 - Aucun état client qui duplique des données en base (pas de Redux/Zustand pour du contenu Supabase)
 - Les droits d'accès sont gérés par les RLS policies — ne pas les recoder côté client
+- Le client Supabase (`src/lib/supabase.ts`) utilise `AsyncStorage` comme adapter de stockage — obligatoire en React Native pour que la session persiste entre les relances de l'app (`localStorage` n'existe pas sur mobile)
 
 ---
 
