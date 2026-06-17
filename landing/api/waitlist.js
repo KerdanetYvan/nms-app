@@ -9,20 +9,9 @@ export default async function handler(req, res) {
   }
 
   const cleanEmail = email.trim().toLowerCase();
-  const betaLink = process.env.BETA_LINK;
-
-  const scriptPayload = JSON.stringify({ email: cleanEmail, token: process.env.GOOGLE_SCRIPT_TOKEN });
-  const scriptInit = { method: "POST", headers: { "Content-Type": "application/json" }, body: scriptPayload, redirect: "manual" };
-  let scriptRes = await fetch(process.env.GOOGLE_SCRIPT_URL, scriptInit);
-  if (scriptRes.status === 301 || scriptRes.status === 302) {
-    const location = scriptRes.headers.get("location");
-    scriptRes = await fetch(location, scriptInit);
-  }
-  const scriptBody = await scriptRes.text().catch(() => "");
-  console.log("Apps Script response:", scriptRes.status, scriptBody);
 
   const [betaMail, notifMail] = await Promise.all([
-    // Email envoyé à l'inscrit avec le lien bêta
+    // Email envoyé à l'inscrit avec les instructions d'accès à la beta
     fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -34,27 +23,121 @@ export default async function handler(req, res) {
         to: cleanEmail,
         subject: "Ton acces a la beta Doo",
         html: `
-          <div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:480px;margin:0 auto;padding:40px 24px;background:#FDFBF0;color:#3D3540;">
-            <svg width="80" height="42" viewBox="0 0 381 199" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block;margin-bottom:32px;">
-              <path d="M38.4254 196C34.748 196 31.6557 194.746 29.1484 192.239C26.6412 189.732 25.3875 186.64 25.3875 182.962V13.2198C25.3875 9.37533 26.6412 6.28303 29.1484 3.94291C31.6557 1.43564 34.748 0.182002 38.4254 0.182002H83.807C102.695 0.182002 119.494 4.36079 134.203 12.7184C148.913 21.0759 160.362 32.693 168.553 47.5695C176.743 62.2788 180.838 79.0775 180.838 97.9656C180.838 116.854 176.743 133.736 168.553 148.613C160.362 163.489 148.913 175.106 134.203 183.464C119.494 191.821 102.695 196 83.807 196H38.4254ZM83.807 172.933C97.6806 172.933 110.05 169.757 120.915 163.405C131.947 157.054 140.471 148.195 146.489 136.828C152.673 125.295 155.766 112.341 155.766 97.9656C155.766 83.5906 152.673 70.7199 146.489 59.3536C140.471 47.9873 131.947 39.1283 120.915 32.7765C110.05 26.4248 97.6806 23.2489 83.807 23.2489H51.4632V172.933H83.807Z" fill="#7A6678"/>
-              <ellipse cx="237.882" cy="145.035" rx="44.4639" ry="44.7439" stroke="#7A6678" stroke-width="17.9091"/>
-              <circle cx="257.891" cy="128.945" r="14.3273" fill="#7A6678"/>
-              <ellipse cx="327.428" cy="145.035" rx="44.4639" ry="44.7439" stroke="#7A6678" stroke-width="17.9091"/>
-              <circle cx="347.436" cy="128.945" r="14.3273" fill="#7A6678"/>
-            </svg>
-            <h1 style="font-size:24px;font-weight:800;color:#4A3F4A;margin:0 0 12px;">Bienvenue dans la beta !</h1>
-            <p style="font-size:16px;line-height:1.65;color:#9B8F99;margin:0 0 32px;">
-              Merci d'etre la. Voici ton lien pour installer Doo et decouvrir
-              les premiers defis.
-            </p>
-            <a href="${betaLink}" style="display:inline-block;background:#766675;color:#fff;font-weight:700;font-size:16px;padding:16px 32px;border-radius:16px;text-decoration:none;">
-              Telecharger Doo
-            </a>
-            <p style="font-size:13px;color:#9B8F99;margin-top:40px;line-height:1.5;">
-              Tu recois cet email parce que tu as rejoint la liste d'attente Doo.<br>
-              Si c'est une erreur, ignore simplement ce message.
-            </p>
-          </div>
+          <!DOCTYPE html>
+          <html lang="fr">
+          <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" /></head>
+          <body style="margin:0;padding:0;background-color:#FDFBF0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FDFBF0;padding:40px 16px;">
+              <tr><td align="center">
+                <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;">
+
+                  <!-- Card -->
+                  <tr>
+                    <td style="background-color:#FFFFFF;border-radius:20px;padding:40px 32px;box-shadow:0 4px 24px rgba(118,102,117,0.10);">
+                      <table width="100%" cellpadding="0" cellspacing="0">
+
+                        <!-- Logo -->
+                        <tr>
+                          <td align="center" style="padding-bottom:24px;">
+                            <img src="https://choezufjwraxtlwutuyo.supabase.co/storage/v1/object/public/assets/logo_doo.png" alt="Doo" width="120" style="display:block;border:0;" />
+                          </td>
+                        </tr>
+
+                        <!-- Titre -->
+                        <tr>
+                          <td align="center" style="padding-bottom:8px;">
+                            <h1 style="margin:0;font-size:22px;font-weight:800;color:#4A3F4A;">Bienvenue dans la beta !</h1>
+                          </td>
+                        </tr>
+
+                        <!-- Sous-titre -->
+                        <tr>
+                          <td align="center" style="padding-bottom:32px;">
+                            <p style="margin:0;font-size:15px;color:#9B8F99;line-height:1.6;">Suis ces 3 etapes pour acceder a Doo.</p>
+                          </td>
+                        </tr>
+
+                        <!-- Etape 1 -->
+                        <tr>
+                          <td style="padding-bottom:24px;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                              <tr>
+                                <td width="40" valign="top">
+                                  <div style="width:32px;height:32px;background:#766675;border-radius:50%;font-weight:800;font-size:15px;color:#fff;line-height:32px;text-align:center;">1</div>
+                                </td>
+                                <td valign="top">
+                                  <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#4A3F4A;">Rejoins le groupe testeur</p>
+                                  <p style="margin:0 0 12px;font-size:14px;color:#9B8F99;line-height:1.5;">C'est ce qui te donne acces au test ferme sur le Play Store.</p>
+                                  <a href="https://groups.google.com/g/testeur-doo" style="display:inline-block;background:#766675;color:#fff;font-weight:700;font-size:14px;padding:10px 20px;border-radius:12px;text-decoration:none;">Rejoindre le groupe</a>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+
+                        <!-- Etape 2 -->
+                        <tr>
+                          <td style="padding-bottom:24px;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                              <tr>
+                                <td width="40" valign="top">
+                                  <div style="width:32px;height:32px;background:#766675;border-radius:50%;font-weight:800;font-size:15px;color:#fff;line-height:32px;text-align:center;">2</div>
+                                </td>
+                                <td valign="top">
+                                  <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#4A3F4A;">Active ton acces testeur</p>
+                                  <p style="margin:0 0 12px;font-size:14px;color:#9B8F99;line-height:1.5;">Clique sur le lien correspondant a ta situation.</p>
+                                  <a href="https://play.google.com/store/apps/details?id=app.doo" style="display:inline-block;background:#F0EBE8;color:#4A3F4A;font-weight:700;font-size:14px;padding:10px 20px;border-radius:12px;text-decoration:none;margin-right:8px;">Depuis Android</a>
+                                  <a href="https://play.google.com/apps/testing/app.doo" style="display:inline-block;background:#F0EBE8;color:#4A3F4A;font-weight:700;font-size:14px;padding:10px 20px;border-radius:12px;text-decoration:none;">Depuis le Web</a>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+
+                        <!-- Etape 3 -->
+                        <tr>
+                          <td style="padding-bottom:32px;">
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                              <tr>
+                                <td width="40" valign="top">
+                                  <div style="width:32px;height:32px;background:#766675;border-radius:50%;font-weight:800;font-size:15px;color:#fff;line-height:32px;text-align:center;">3</div>
+                                </td>
+                                <td valign="top">
+                                  <p style="margin:0 0 4px;font-size:15px;font-weight:700;color:#4A3F4A;">Telecharge Doo</p>
+                                  <p style="margin:0 0 12px;font-size:14px;color:#9B8F99;line-height:1.5;">Une fois testeur active, tu peux installer l'app et decouvrir les premiers defis.</p>
+                                  <a href="https://play.google.com/store/apps/details?id=app.doo" style="display:inline-block;background:#766675;color:#fff;font-weight:700;font-size:14px;padding:10px 20px;border-radius:12px;text-decoration:none;">Telecharger Doo</a>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+
+                        <!-- Footer note -->
+                        <tr>
+                          <td align="center">
+                            <p style="margin:0;font-size:13px;color:#C2BAC0;line-height:1.5;">
+                              Tu recois cet email parce que tu as rejoint la liste d'attente Doo.<br>
+                              Si c'est une erreur, ignore simplement ce message.
+                            </p>
+                          </td>
+                        </tr>
+
+                      </table>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td align="center" style="padding-top:24px;">
+                      <p style="margin:0;font-size:12px;color:#C2BAC0;">© Doo — reprends le controle de ton temps d'ecran</p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td></tr>
+            </table>
+          </body>
+          </html>
         `,
       }),
     }),
