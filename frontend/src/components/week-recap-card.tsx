@@ -1,4 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity } from "react-native";
+import { useRouter } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 
 import { colors, radius, spacing } from "@/src/theme/colors";
@@ -13,11 +14,14 @@ function ArrowIcon() {
   );
 }
 
-type Props = { onPress?: () => void };
-
-export function WeekRecapCard({ onPress }: Props) {
+export function WeekRecapCard() {
+  const router = useRouter();
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75}>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => router.push("/week-recap")}
+      activeOpacity={0.75}
+    >
       <Text style={styles.label}>Voir mon récap de la semaine</Text>
       <ArrowIcon />
     </TouchableOpacity>

@@ -11,6 +11,7 @@ import android.provider.Settings
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 import expo.modules.usagestats.MonitoringService
+import java.util.Calendar
 
 class UsageStatsModule : Module() {
   override fun definition() = ModuleDefinition {
@@ -72,13 +73,14 @@ class UsageStatsModule : Module() {
         ?: emptyList()
     }
 
-    Function("startMonitoring") { packageNames: List<String>, labelNames: List<String>, intervalSeconds: Int, isDev: Boolean ->
+    Function("startMonitoring") { packageNames: List<String>, labelNames: List<String>, intervalSeconds: Int, isDev: Boolean, targetDailyMinutes: Int ->
       val context = appContext.reactContext ?: return@Function null
       val intent = Intent(context, MonitoringService::class.java).apply {
         putStringArrayListExtra("packageNames", ArrayList(packageNames))
         putStringArrayListExtra("labelNames", ArrayList(labelNames))
         putExtra("intervalMs", intervalSeconds * 1_000L)
         putExtra("isDev", isDev)
+        putExtra("targetDailyMs", targetDailyMinutes * 60_000L)
       }
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         context.startForegroundService(intent)
@@ -126,5 +128,37 @@ class UsageStatsModule : Module() {
       }
       packages.toList()
     }
+
+    AsyncFunction("getDailyUsage") { packageNames: List<String>, startTime: Long, endTime: Long ->
+      getDailyUsageData(packageNames, startTime, endTime)
+    }
+  }
+
+  private fun truncateToMidnight(timeMs: Long): Long {
+    val cal = Calendar.getInstance()
+    cal.timeInMillis = timeMs
+    cal.set(Calendar.HOUR_OF_DAY, 0)
+    cal.set(Calendar.MINUTE, 0)
+    cal.set(Calendar.SECOND, 0)
+    cal.set(Calendar.MILLISECOND, 0)
+    return cal.timeInMillis
+  }
+
+  private fun getDailyUsageData(packageNames: List<String>, startTime: Long, endTime: Long): List<Map<String, Any>> {
+    val context = appContext.reactContext ?: return emptyList()
+    val manager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+    val stats = manager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime, endTime)
+
+    val dailyTotals = mutableMapOf<Long, Long>()
+    stats?.forEach { stat ->
+      if (packageNames.contains(stat.packageName) && stat.totalTimeInForeground > 0) {
+        val dayKey = truncateToMidnight(stat.firstTimeStamp)
+        dailyTotals[dayKey] = (dailyTotals[dayKey] ?: 0L) + stat.totalTimeInForeground
+      }
+    }
+
+    return dailyTotals.entries
+      .sortedBy { it.key }
+      .map { mapOf("dateMs" to it.key, "totalMs" to it.value) }
   }
 }

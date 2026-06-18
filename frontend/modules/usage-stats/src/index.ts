@@ -47,10 +47,11 @@ export function startMonitoring(
   packageNames: string[],
   labelNames: string[],
   intervalSeconds: number = 5,
-  isDev: boolean = false
+  isDev: boolean = false,
+  targetDailyMinutes: number = 0
 ): void {
   if (!UsageStats) return;
-  UsageStats.startMonitoring(packageNames, labelNames, intervalSeconds, isDev);
+  UsageStats.startMonitoring(packageNames, labelNames, intervalSeconds, isDev, targetDailyMinutes);
 }
 
 export function stopMonitoring(): void {
@@ -64,6 +65,17 @@ export async function getForegroundApps(
 ): Promise<string[]> {
   if (!UsageStats) return [];
   return UsageStats.getForegroundApps(startTime, endTime);
+}
+
+export type DailyUsageEntry = { dateMs: number; totalMs: number };
+
+export async function getDailyUsage(
+  packageNames: string[],
+  startTime: number,
+  endTime: number
+): Promise<DailyUsageEntry[]> {
+  if (!UsageStats) return [];
+  return UsageStats.getDailyUsage(packageNames, startTime, endTime);
 }
 
 export function isBatteryOptimizationIgnored(): boolean {

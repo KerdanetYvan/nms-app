@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, { Path } from "react-native-svg";
 
@@ -9,7 +10,8 @@ import { DooLogo } from "@/src/components/doo-logo";
 import { WeekRecapCard } from "@/src/components/week-recap-card";
 import { DailyProgressCard } from "@/src/components/daily-progress-card";
 import { ScreenTimeCard } from "@/src/components/screen-time-card";
-import { TopAppsCard, type AppUsage } from "@/src/components/top-apps-card";
+import { TopAppsCard } from "@/src/components/top-apps-card";
+import { useDailyUsage } from "@/src/hooks/use-daily-usage";
 import { colors, radius, spacing } from "@/src/theme/colors";
 
 // ─── Date helper ──────────────────────────────────────────────────────────────
@@ -42,29 +44,52 @@ function BarChartIcon() {
   );
 }
 
-// ─── Placeholder data — remplacer par de vraies données API quand prêt ───────
+function LockIcon() {
+  return (
+    <Svg width={28} height={28} viewBox="0 0 24 24" fill="none"
+      stroke={colors.muted} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M7 11V7a5 5 0 0 1 10 0v4" />
+      <Path d="M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z" />
+    </Svg>
+  );
+}
 
-const PLACEHOLDER_SAVED_MIN   = 27;
-const PLACEHOLDER_CURRENT_MIN = 102;   // 1h42
-const PLACEHOLDER_TARGET_MIN  = 120;   // 2H
-const PLACEHOLDER_DELTA       = -18;
-const PLACEHOLDER_APPS: AppUsage[] = [
-  { name: "Instagram", minutes: 42 },
-  { name: "Tiktok",    minutes: 31 },
-  { name: "Youtube",   minutes: 18 },
-];
+// ─── No-permission card ───────────────────────────────────────────────────────
+
+function PermissionPromptCard() {
+  const router = useRouter();
+  return (
+    <View style={styles.permission_card}>
+      <LockIcon />
+      <Text style={styles.permission_title}>Accès aux données requis</Text>
+      <Text style={styles.permission_body}>
+        Active l'accès aux données d'utilisation pour voir ton temps d'écran et tes statistiques par app.
+      </Text>
+      <TouchableOpacity
+        style={styles.permission_btn}
+        onPress={() => router.push("/app-surveillance-settings")}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.permission_btn_text}>Configurer l'accès</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const [points, setPoints] = useState<number | null>(null);
+  const dailyUsage = useDailyUsage();
 
   useEffect(() => {
     api.getAnswers()
       .then((answers) => setPoints(answers.length))
       .catch(() => {});
   }, []);
+
+  const hasData = dailyUsage.hasPermission && !dailyUsage.isLoading;
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -92,20 +117,36 @@ export default function ProfileScreen() {
       >
         <WeekRecapCard />
 
-        <DailyProgressCard
-          savedMinutes={PLACEHOLDER_SAVED_MIN}
-          currentMinutes={PLACEHOLDER_CURRENT_MIN}
-          targetMinutes={PLACEHOLDER_TARGET_MIN}
-        />
+        {!dailyUsage.hasPermission ? (
+          <PermissionPromptCard />
+        ) : (
+          <>
+            <DailyProgressCard
+              savedMinutes={hasData ? dailyUsage.savedMinutes : 0}
+              currentMinutes={hasData ? dailyUsage.totalMinutes : 0}
+              targetMinutes={hasData ? dailyUsage.targetMinutes : 0}
+            />
 
-        <View style={styles.section_header}>
-          <BarChartIcon />
-          <Text style={styles.section_title}>Statistiques</Text>
-        </View>
+            <View style={styles.section_header}>
+              <BarChartIcon />
+              <Text style={styles.section_title}>Statistiques</Text>
+            </View>
 
-        <ScreenTimeCard deltaFromYesterday={PLACEHOLDER_DELTA} />
+            <ScreenTimeCard deltaFromYesterday={0} />
 
-        <TopAppsCard apps={PLACEHOLDER_APPS} />
+            {(hasData && dailyUsage.perApp.length > 0) && (
+              <TopAppsCard apps={dailyUsage.perApp} />
+            )}
+
+            {(hasData && dailyUsage.perApp.length === 0) && (
+              <View style={styles.empty_apps}>
+                <Text style={styles.empty_apps_text}>
+                  Aucune utilisation enregistrée aujourd'hui.
+                </Text>
+              </View>
+            )}
+          </>
+        )}
       </ScrollView>
 
       <BottomNav />
@@ -167,5 +208,48 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "700",
     color: colors.textDark,
+  },
+
+  // Permission prompt
+  permission_card: {
+    backgroundColor: colors.offWhite,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    gap: spacing.sm,
+    alignItems: "center",
+  },
+  permission_title: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: colors.textDark,
+    textAlign: "center",
+  },
+  permission_body: {
+    fontSize: 14,
+    color: colors.muted,
+    textAlign: "center",
+    lineHeight: 21,
+  },
+  permission_btn: {
+    marginTop: spacing.xs,
+    backgroundColor: colors.primary,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  permission_btn_text: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: colors.white,
+  },
+
+  // Empty apps
+  empty_apps: {
+    paddingVertical: spacing.sm,
+  },
+  empty_apps_text: {
+    fontSize: 13,
+    color: colors.muted,
+    textAlign: "center",
   },
 });

@@ -12,6 +12,14 @@ function EditIcon() {
   );
 }
 
+function formatSavedTime(minutes: number): string {
+  if (minutes < 60) return minutes <= 1 ? `${minutes} min` : `${minutes} mins`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m <= 1 ? `${m} min` : `${m} mins`}`;
+}
+
 function formatTime(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
@@ -34,7 +42,7 @@ export function DailyProgressCard({ savedMinutes, currentMinutes, targetMinutes,
     <View style={styles.card}>
       <Text style={styles.title}>
         {"Aujourd'hui, tu as économisé "}
-        <Text style={styles.highlight}>{savedMinutes} min de scroll</Text>
+        <Text style={styles.highlight}>{formatSavedTime(savedMinutes)} de scroll</Text>
       </Text>
 
       <View style={styles.bar_row}>

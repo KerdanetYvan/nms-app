@@ -25,6 +25,7 @@ const PATHNAME_TO_TAB: Record<string, NavTab> = {
   "/profile": "user",
   "/personal-info": "user",
   "/settings": "settings",
+  "/week-recap": "user",
   "/notifications-settings": "settings",
   "/app-surveillance-settings": "settings",
   "/terms": "settings",
