@@ -18,7 +18,7 @@ erDiagram
         jsonb program
         timestamptz created_at
         text reason
-        text_array approach_history
+        text_array apps
         text_array scroll_moments
         date started_at
         text status
@@ -85,6 +85,7 @@ erDiagram
 ## Tables
 
 ### `user_profiles`
+
 | Colonne | Type | Clé |
 |---|---|---|
 | user_id | uuid | PK, FK → auth.users.id |
@@ -94,7 +95,7 @@ erDiagram
 | program | jsonb | |
 | created_at | timestamptz | |
 | reason | text | |
-| approach_history *(tronqué)* | _text | |
+| apps | _text | |
 | scroll_moments | _text | |
 | started_at | date | |
 | status | text | |
@@ -102,6 +103,7 @@ erDiagram
 | consecutive_misses | int4 | |
 
 ### `weekly_checkins`
+
 | Colonne | Type | Clé |
 |---|---|---|
 | id | uuid | PK |
@@ -109,15 +111,16 @@ erDiagram
 | week_number | int4 | |
 | week_start_date | date | |
 | target_daily_minutes | int4 | |
-| phase *(tronqué)* | text | |
-| reduction_from_previous_week *(tronqué)* | int4 | |
-| screen_time_reported_minutes *(tronqué)* | int4 | |
+| phase | text | |
+| reduction_from_previous_week | int4 | |
+| screen_time_reported_minutes | int4 | |
 | goal_met | bool | |
 | challenge_completed | bool | |
 | created_at | timestamptz | |
 | updated_at | timestamptz | |
 
 ### `profiles`
+
 | Colonne | Type | Clé |
 |---|---|---|
 | id | uuid | PK, FK → auth.users.id |
@@ -129,6 +132,7 @@ erDiagram
 | updated_at | timestamptz | |
 
 ### `answers`
+
 | Colonne | Type | Clé |
 |---|---|---|
 | id | uuid | PK |
@@ -139,12 +143,14 @@ erDiagram
 | created_at | timestamptz | |
 
 ### `contexts`
+
 | Colonne | Type | Clé |
 |---|---|---|
 | key | text | PK |
 | label | text | |
 
 ### `challenges`
+
 | Colonne | Type | Clé |
 |---|---|---|
 | id | uuid | PK |
