@@ -26,6 +26,7 @@ const PATHNAME_TO_TAB: Record<string, NavTab> = {
   "/personal-info": "user",
   "/settings": "settings",
   "/notifications-settings": "settings",
+  "/app-surveillance-settings": "settings",
   "/terms": "settings",
   "/privacy": "settings",
 };
