@@ -7,7 +7,14 @@ import { APP_PACKAGE_MAP, resolvePackageNames } from "@/src/utils/app-packages";
 
 export function useAppMonitoring(isGranted: boolean, session: Session | null): void {
   useEffect(() => {
-    if (Platform.OS !== "android" || !isGranted || !session) return;
+    if (Platform.OS !== "android") return;
+
+    if (!isGranted) {
+      stopMonitoring();
+      return;
+    }
+
+    if (!session) return;
 
     let active = true;
 
@@ -22,12 +29,12 @@ export function useAppMonitoring(isGranted: boolean, session: Session | null): v
         (pkg) => Object.keys(APP_PACKAGE_MAP).find((k) => APP_PACKAGE_MAP[k] === pkg) ?? pkg
       );
 
-      startMonitoring(packageNames, labelNames, 5);
+      startMonitoring(packageNames, labelNames, 5, __DEV__);
     });
 
     return () => {
       active = false;
-      stopMonitoring();
+      // Le service reste actif en arrière-plan — stopMonitoring() n'est appelé que si la permission est révoquée
     };
   }, [isGranted, session]);
 }

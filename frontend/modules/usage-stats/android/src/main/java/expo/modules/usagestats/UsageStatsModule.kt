@@ -4,7 +4,9 @@ import android.app.AppOpsManager
 import android.app.usage.UsageStatsManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import android.provider.Settings
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -70,12 +72,13 @@ class UsageStatsModule : Module() {
         ?: emptyList()
     }
 
-    Function("startMonitoring") { packageNames: List<String>, labelNames: List<String>, intervalSeconds: Int ->
+    Function("startMonitoring") { packageNames: List<String>, labelNames: List<String>, intervalSeconds: Int, isDev: Boolean ->
       val context = appContext.reactContext ?: return@Function null
       val intent = Intent(context, MonitoringService::class.java).apply {
         putStringArrayListExtra("packageNames", ArrayList(packageNames))
         putStringArrayListExtra("labelNames", ArrayList(labelNames))
         putExtra("intervalMs", intervalSeconds * 1_000L)
+        putExtra("isDev", isDev)
       }
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         context.startForegroundService(intent)
@@ -88,6 +91,22 @@ class UsageStatsModule : Module() {
     Function("stopMonitoring") {
       val context = appContext.reactContext ?: return@Function null
       context.stopService(Intent(context, MonitoringService::class.java))
+      null
+    }
+
+    Function("isBatteryOptimizationIgnored") {
+      val context = appContext.reactContext ?: return@Function false
+      val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+      pm.isIgnoringBatteryOptimizations(context.packageName)
+    }
+
+    Function("requestIgnoreBatteryOptimization") {
+      val context = appContext.reactContext ?: return@Function null
+      val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+        data = Uri.parse("package:${context.packageName}")
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      }
+      context.startActivity(intent)
       null
     }
 
