@@ -16,7 +16,9 @@ Conventions et règles de développement pour le projet Doo.
 | Supabase | Auth + PostgreSQL + API auto-générée |
 | EAS Build | Build et distribution des APKs/IPAs |
 | react-native-reanimated | Animations — à préférer à l'API `Animated` native |
+| react-native-svg | Graphiques SVG (programme, week-recap) |
 | @expo-google-fonts/quicksand | Police Quicksand — chargée dans `_layout.tsx`, utilisée via `fontFamily: "Quicksand_400Regular"` |
+| Expo Modules API (Kotlin) | Module natif `modules/usage-stats/` — UsageStatsManager + service foreground |
 
 ### Ce qu'on n'utilise pas
 
@@ -122,21 +124,27 @@ Conventions et règles de développement pour le projet Doo.
 frontend/
 ├── android/                     — projet Android natif (généré par expo prebuild, committé)
 ├── modules/
-│   └── usage-stats/             — module natif Expo (Kotlin) pour UsageStatsManager Android
+│   └── usage-stats/             — module natif Expo (Kotlin) : UsageStatsManager + MonitoringService
 ├── app/                         — screens Expo Router (un fichier = une route)
 │   ├── _layout.tsx              — layout racine, garde de session auth
+│   ├── (tabs)/                  — onglets de navigation principale
+│   │   ├── _layout.tsx          — layout des onglets (BottomNav)
+│   │   ├── index.tsx            — accueil, sélection du contexte
+│   │   ├── program.tsx          — visualisation du programme de réduction
+│   │   ├── profile.tsx          — profil utilisateur + stats temps réel
+│   │   └── settings.tsx         — paramètres
 │   ├── welcome.tsx              — landing page (utilisateurs non connectés)
 │   ├── auth.tsx                 — login / register
-│   ├── confirm-email.tsx        — saisie du code OTP de confirmation e-mail (route publique)
+│   ├── confirm-email.tsx        — saisie du code OTP (route publique)
 │   ├── onboarding.tsx           — formulaire d'onboarding 6 étapes (première connexion)
-│   ├── index.tsx                — accueil, sélection du contexte
-│   ├── program.tsx              — visualisation du programme de réduction
 │   ├── challenge.tsx            — affichage du défi
 │   ├── answer.tsx               — saisie de la réponse
-│   ├── profile.tsx              — profil utilisateur
-│   ├── settings.tsx             — paramètres (notifications, infos perso, légal, déconnexion)
+│   ├── week-recap.tsx           — récapitulatif hebdomadaire (graphique barres + classement apps)
+│   ├── app-surveillance-settings.tsx — configuration des apps surveillées + exemption batterie
 │   ├── personal-info.tsx        — édition des informations personnelles
 │   ├── notifications-settings.tsx — paramètres de notifications
+│   ├── acceleration.tsx         — flow recalibrage accélération (algo 3)
+│   ├── relapse.tsx              — flow recalibrage rechute (algo 2)
 │   ├── privacy.tsx              — politique de confidentialité (RGPD)
 │   └── terms.tsx                — conditions d'utilisation
 ├── assets/
@@ -145,12 +153,16 @@ frontend/
 └── src/
     ├── algorithms/              — logique métier pure (sans UI ni dépendances RN)
     ├── api/                     — client Supabase (requêtes vers la BDD)
-    ├── components/              — composants React Native réutilisables (BottomNav, DooLogo, EyesLogo)
-    ├── hooks/                   — hooks custom (use-auth, use-icon-fonts, use-permissions)
+    ├── components/              — composants réutilisables :
+    │                              BottomNav, DooLogo, EyesLogo, PageHeader,
+    │                              DailyProgressCard, ScreenTimeCard, TopAppsCard,
+    │                              WeekRecapCard, UsagePermissionModal
+    ├── hooks/                   — use-auth, use-app-monitoring, use-app-surveillance,
+    │                              use-daily-usage, use-icon-fonts, use-permissions
     ├── lib/                     — singletons et clients tiers (supabase.ts)
     ├── theme/                   — design tokens (colors.ts, global-styles.ts)
     ├── types/                   — types TypeScript partagés (index.ts)
-    └── utils/                   — fonctions utilitaires (notifications, storage, permissions)
+    └── utils/                   — app-packages, notifications, permissions, storage
 ```
 
 **Règles de placement :**
@@ -197,6 +209,7 @@ Jest + ts-jest, configuré dans `jest.config.js`. Les tests couvrent la logique 
 ### Build APK (Android)
 
 ```bash
+cd frontend
 eas build -p android --profile preview
 ```
 

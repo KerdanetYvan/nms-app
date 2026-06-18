@@ -1,5 +1,30 @@
 # Changelog
 
+## [alpha-1.1.0] — 2026-06-18
+
+### Added
+
+- **Module natif `usage-stats`** (`modules/usage-stats/`) — Expo Modules API (Kotlin). Expose `UsageStatsManager`, `queryEvents`, `getDailyUsage` et le service foreground à React Native.
+- **Service foreground `MonitoringService`** — tourne en arrière-plan, survit à la fermeture de l'app (`START_REDELIVER_INTENT`). Détecte les ouvertures d'apps via `queryEvents`.
+- **Notifications de quota journalier** — à 80% : "Objectif bientôt atteint" ; à 100% : "Quota atteint" ; relance après dépassement (cooldown 5 min) : "Tu as dépassé ton quota pour aujourd'hui". Réinitialisé à minuit.
+- **`getDailyUsage`** (`UsageStatsModule.kt` + `modules/usage-stats/src/index.ts`) — renvoie le temps total par jour sur une plage. Contourne l'absence de données `INTERVAL_DAILY` pour le jour en cours via un second appel `getAppsUsage`.
+- **`startMonitoring` — paramètre `targetDailyMinutes`** — quota journalier transmis du JS vers Kotlin via intent extra `targetDailyMs`. Résolu depuis `api.getWeeklyCheckins()`.
+- **Page récap semaine** (`app/week-recap.tsx`) — graphique barres Lun–Dim (jour courant en orange + label "Auj."), temps moyen vs objectif, delta vs semaine précédente, classement apps avec barres horizontales (toutes les apps affichées, y compris 0 min).
+- **Stats temps réel profil** (`app/(tabs)/profile.tsx`) — temps du jour, temps économisé, barre de progression vs objectif. Top apps du jour.
+- **Écran paramètres surveillance** (`app/app-surveillance-settings.tsx`) — configuration des apps à surveiller, exemption batterie Android.
+- **Composants** : `DailyProgressCard`, `ScreenTimeCard`, `TopAppsCard`, `WeekRecapCard`, `PageHeader`, `UsagePermissionModal`.
+- **Hooks** : `use-app-monitoring` (démarre/arrête le service), `use-app-surveillance` (apps configurées), `use-daily-usage` (stats du jour).
+- **`src/utils/app-packages.ts`** — map `label → package Android`, `resolvePackageNames`, inverse map `pkg → label`.
+- **`.easignore`** (`frontend/.easignore`) — exclut `android/.gradle/` et dossiers build du tarball EAS (évite les erreurs EBUSY du daemon Gradle).
+
+### Changed
+
+- **`app/`** — restructuré en `(tabs)/` pour `index`, `program`, `profile`, `settings`.
+- **Notification app-open** — retirée de la production. Activée uniquement en mode `isDev`.
+- **Mode dev `MonitoringService`** — notification persistante par app sur channel séparé `doo-monitoring-fg-dev` (`IMPORTANCE_LOW`). Production : `doo-monitoring-fg` (`IMPORTANCE_MIN`, silencieuse).
+
+---
+
 ## [alpha-1.0.0] — 2026-06-17
 
 ### Added
