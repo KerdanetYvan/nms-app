@@ -96,11 +96,10 @@ function build_phase_summaries(
   return summaries;
 }
 
-// ─── Chart ────────────────────────────────────────────────────────────────────
+// ─── Overview chart ───────────────────────────────────────────────────────────
 
 const CHART_H = 220;
 const PAD = { top: 14, right: 16, bottom: 36, left: 44 };
-// Catmull-Rom → Bezier cubique : alpha = 1/6 donne des tangentes alignées sur les voisins
 const CR_ALPHA = 1 / 6;
 
 function build_smooth_path(pts: { x: number; y: number }[]): string {
@@ -121,30 +120,43 @@ function build_smooth_path(pts: { x: number; y: number }[]): string {
   return d;
 }
 
-type ChartProps = {
+type OverviewChartProps = {
   milestones: WeekMilestone[];
   current_hours: number;
   target_hours: number;
   chart_width: number;
+  selected_week: number | null;
+  on_milestone_press: (m: WeekMilestone) => void;
 };
 
-function ProgramChart({ milestones, current_hours, target_hours, chart_width }: ChartProps) {
+function OverviewChart({
+  milestones,
+  current_hours,
+  target_hours,
+  chart_width,
+  selected_week,
+  on_milestone_press,
+}: OverviewChartProps) {
   const inner_w = chart_width - PAD.left - PAD.right;
   const inner_h = CHART_H - PAD.top - PAD.bottom;
   const max_week = milestones[milestones.length - 1].week;
 
-  const range = current_hours - target_hours;
-  const margin = Math.max(range * 0.15, 0.15);
-  const y_min = Math.max(0, target_hours - margin);
-  const y_max = current_hours + margin;
+  // All Y values in weekly hours (× 7) for display
+  const w_current = current_hours * 7;
+  const w_target = target_hours * 7;
+
+  const range = w_current - w_target;
+  const margin = Math.max(range * 0.15, 0.15 * 7);
+  const y_min = Math.max(0, w_target - margin);
+  const y_max = w_current + margin;
   const y_range = y_max - y_min;
 
   const to_x = (week: number) => PAD.left + (week / max_week) * inner_w;
   const to_y = (h: number) => PAD.top + inner_h * (1 - (h - y_min) / y_range);
 
   const data_pts = [
-    { x: to_x(0), y: to_y(current_hours) },
-    ...milestones.map((m) => ({ x: to_x(m.week), y: to_y(m.targetDailyHours) })),
+    { x: to_x(0), y: to_y(w_current) },
+    ...milestones.map((m) => ({ x: to_x(m.week), y: to_y(m.targetDailyHours * 7) })),
   ];
 
   const line_path = build_smooth_path(data_pts);
@@ -167,85 +179,126 @@ function ProgramChart({ milestones, current_hours, target_hours, chart_width }: 
         </LinearGradient>
       </Defs>
 
-      {/* Horizontal grid */}
       {y_ticks.map((tick, i) => (
-        <SvgLine
-          key={i}
-          x1={PAD.left}
-          y1={to_y(tick)}
-          x2={PAD.left + inner_w}
-          y2={to_y(tick)}
-          stroke={colors.beige}
-          strokeWidth={1}
-        />
+        <SvgLine key={i} x1={PAD.left} y1={to_y(tick)} x2={PAD.left + inner_w} y2={to_y(tick)}
+          stroke={colors.beige} strokeWidth={1} />
       ))}
 
-      {/* Target dashed line */}
-      <SvgLine
-        x1={PAD.left}
-        y1={to_y(target_hours)}
-        x2={PAD.left + inner_w}
-        y2={to_y(target_hours)}
-        stroke={colors.muted}
-        strokeWidth={1.5}
-        strokeDasharray="5,4"
-        strokeOpacity={0.55}
-      />
+      <SvgLine x1={PAD.left} y1={to_y(w_target)} x2={PAD.left + inner_w} y2={to_y(w_target)}
+        stroke={colors.muted} strokeWidth={1.5} strokeDasharray="5,4" strokeOpacity={0.55} />
 
-      {/* Area fill */}
       <Path d={area_path} fill="url(#area_grad)" />
 
-      {/* Progression curve */}
-      <Path
-        d={line_path}
-        fill="none"
-        stroke={colors.primary}
-        strokeWidth={2.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <Path d={line_path} fill="none" stroke={colors.primary} strokeWidth={2.5}
+        strokeLinecap="round" strokeLinejoin="round" />
 
-      {/* Milestone dots colored by phase */}
-      {milestones.map((m) => (
-        <SvgCircle
-          key={m.week}
-          cx={to_x(m.week)}
-          cy={to_y(m.targetDailyHours)}
-          r={4.5}
-          fill={PHASE_CONFIG[m.phase].bg}
-          stroke={colors.primary}
-          strokeWidth={1.5}
-        />
-      ))}
+      {milestones.flatMap((m) => {
+        const cx = to_x(m.week);
+        const cy = to_y(m.targetDailyHours * 7);
+        const is_selected = selected_week === m.week;
+        return [
+          <SvgCircle key={`hit-${m.week}`} cx={cx} cy={cy} r={18} fill="transparent"
+            onPress={() => on_milestone_press(m)} />,
+          <SvgCircle key={`dot-${m.week}`} cx={cx} cy={cy}
+            r={is_selected ? 7 : 4.5}
+            fill={PHASE_CONFIG[m.phase].bg}
+            stroke={colors.primary}
+            strokeWidth={is_selected ? 2.5 : 1.5}
+          />,
+        ];
+      })}
 
-      {/* Y-axis labels */}
       {y_ticks.map((tick, i) => (
-        <SvgText
-          key={i}
-          x={PAD.left - 7}
-          y={to_y(tick) + 4}
-          fontSize={10}
-          fill={colors.muted}
-          textAnchor="end"
-        >
+        <SvgText key={i} x={PAD.left - 7} y={to_y(tick) + 4} fontSize={10}
+          fill={colors.muted} textAnchor="end">
           {formatHours(tick)}
         </SvgText>
       ))}
 
-      {/* X-axis labels */}
+      {/* Y-axis unit label */}
+      <SvgText x={PAD.left - 7} y={PAD.top - 3} fontSize={8}
+        fill={colors.muted} textAnchor="end">
+        h/sem
+      </SvgText>
+
       {x_ticks.map((w) => (
-        <SvgText
-          key={w}
-          x={to_x(w)}
-          y={CHART_H - 6}
-          fontSize={10}
-          fill={colors.muted}
-          textAnchor="middle"
-        >
+        <SvgText key={w} x={to_x(w)} y={CHART_H - 6} fontSize={10}
+          fill={colors.muted} textAnchor="middle">
           {`S${w}`}
         </SvgText>
       ))}
     </Svg>
+  );
+}
+
+// ─── Week detail (detail tab) ─────────────────────────────────────────────────
+
+type WeekDetailProps = {
+  milestone: WeekMilestone;
+  next_milestone: WeekMilestone | null;
+};
+
+function WeekDetail({ milestone, next_milestone }: WeekDetailProps) {
+  const phase_cfg = PHASE_CONFIG[milestone.phase];
+  const week_end = new Date(milestone.startDate);
+  week_end.setDate(week_end.getDate() + 6);
+
+  const reduction_min = next_milestone
+    ? Math.round((milestone.targetDailyHours - next_milestone.targetDailyHours) * 60)
+    : 0;
+
+  return (
+    <View style={styles.week_detail}>
+      {/* Phase + dates */}
+      <View style={styles.week_detail_header}>
+        <View style={[styles.week_detail_badge, { backgroundColor: phase_cfg.bg }]}>
+          <Text style={styles.week_detail_badge_text}>{phase_cfg.label}</Text>
+        </View>
+        <Text style={styles.week_detail_dates}>
+          {formatDate(milestone.startDate)} — {formatDate(week_end)}
+        </Text>
+      </View>
+
+      {/* Two stat blocks */}
+      <View style={styles.week_stats_row}>
+        {/* Current quota */}
+        <View style={styles.week_stat_block}>
+          <Text style={styles.week_stat_label}>Quota journalier</Text>
+          <Text style={styles.week_stat_value}>{formatHours(milestone.targetDailyHours)}</Text>
+          <Text style={styles.week_stat_unit}>/ jour maximum</Text>
+        </View>
+
+        <View style={styles.week_stat_sep} />
+
+        {/* Next week */}
+        <View style={styles.week_stat_block}>
+          {next_milestone ? (
+            <>
+              <Text style={styles.week_stat_label}>Semaine suivante</Text>
+              <Text style={styles.week_stat_value}>
+                {formatHours(next_milestone.targetDailyHours)}
+                <Text style={styles.week_stat_value_unit}>/j</Text>
+              </Text>
+              {reduction_min > 1 ? (
+                <Text style={[styles.week_stat_unit, { color: colors.secondary, fontWeight: "600" }]}>
+                  ↓ {reduction_min} min
+                </Text>
+              ) : (
+                <Text style={styles.week_stat_unit}>même quota</Text>
+              )}
+            </>
+          ) : (
+            <>
+              <Text style={styles.week_stat_label}>Objectif atteint</Text>
+              <Text style={styles.week_stat_value}>{formatHours(milestone.targetDailyHours)}</Text>
+              <Text style={[styles.week_stat_unit, { color: colors.rose, fontWeight: "600" }]}>
+                programme terminé
+              </Text>
+            </>
+          )}
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -269,8 +322,8 @@ function PhaseCard({ summary }: { summary: PhaseSummary }) {
         </Text>
         <Text style={styles.phase_hours}>
           {same_hours
-            ? `Maintenu à ${formatHours(summary.to_hours)}`
-            : `${formatHours(summary.from_hours)} → ${formatHours(summary.to_hours)}`}
+            ? `Maintenu à ${formatHours(summary.to_hours * 7)}/sem`
+            : `${formatHours(summary.from_hours * 7)} → ${formatHours(summary.to_hours * 7)}/sem`}
         </Text>
         <Text style={styles.phase_desc}>{PHASE_DESC[summary.phase]}</Text>
       </View>
@@ -307,24 +360,21 @@ export default function ProgramScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [selected_milestone, setSelectedMilestone] = useState<WeekMilestone | null>(null);
+  const [chart_tab, setChartTab] = useState<"overview" | "detail">("overview");
+
   useEffect(() => {
-    Promise.all([api.getUserProfile(), api.getWeeklyCheckins()])
-      .then(([p, checkins]) => {
+    api.getUserProfile()
+      .then((p) => {
         setProfile(p);
-        if (checkins.length > 0) {
-          setMilestones(
-            checkins.map((c) => ({
-              week: c.week_number,
-              startDate: new Date(c.week_start_date),
-              targetDailyHours: c.target_daily_minutes / 60,
-              phase: c.phase,
-              reductionFromPrevious: c.reduction_from_previous_min / 60,
-            }))
-          );
-        } else if (p) {
-          // Fallback pour les comptes existants sans weekly_checkins
+        if (p) {
           const startDate = p.started_at ? new Date(p.started_at) : new Date();
-          const generated = generateProgram(p.screen_time_min / 60, p.target_time_min / 60, p.motivation, startDate);
+          const generated = generateProgram(
+            p.screen_time_min / 60,
+            p.target_time_min / 60,
+            p.motivation,
+            startDate,
+          );
           setMilestones(generated.milestones);
         }
       })
@@ -354,8 +404,20 @@ export default function ProgramScreen() {
   const weeks_label =
     milestones.length === 1 ? "1 semaine" : `${milestones.length} semaines`;
 
-  // card padding (spacing.md on each side) + scroll padding (spacing.lg on each side)
   const chart_width = screen_width - spacing.lg * 2 - spacing.md * 2;
+
+  const active_milestone = selected_milestone ?? milestones[0];
+  const next_milestone = milestones.find((m) => m.week === active_milestone.week + 1) ?? null;
+
+  const handle_milestone_press = (m: WeekMilestone) => {
+    setSelectedMilestone(m);
+    setChartTab("detail");
+  };
+
+  const switch_to_detail = () => {
+    if (!selected_milestone) setSelectedMilestone(milestones[0]);
+    setChartTab("detail");
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -382,7 +444,7 @@ export default function ProgramScreen() {
             {formatHours(current_hours)} → {formatHours(target_hours)}
           </Text>
           <Text style={styles.summary_meta}>
-            {weeks_label} · {MOTIVATION_LABEL[profile.motivation]}
+            par jour · {weeks_label} · {MOTIVATION_LABEL[profile.motivation]}
           </Text>
         </Animated.View>
 
@@ -390,18 +452,79 @@ export default function ProgramScreen() {
           entering={Platform.OS === "web" ? undefined : FadeInDown.delay(80).springify()}
           style={styles.chart_card}
         >
-          <ProgramChart
-            milestones={milestones}
-            current_hours={current_hours}
-            target_hours={target_hours}
-            chart_width={chart_width}
-          />
-          <PhaseLegend />
+          {/* Tab toggle */}
+          <View style={styles.chart_tabs}>
+            <TouchableOpacity
+              style={[styles.chart_tab_btn, chart_tab === "overview" && styles.chart_tab_btn_active]}
+              onPress={() => setChartTab("overview")}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.chart_tab_label, chart_tab === "overview" && styles.chart_tab_label_active]}>
+                Semaines
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.chart_tab_btn, chart_tab === "detail" && styles.chart_tab_btn_active]}
+              onPress={switch_to_detail}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.chart_tab_label, chart_tab === "detail" && styles.chart_tab_label_active]}>
+                Par jour
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {chart_tab === "overview" ? (
+            <>
+              <View style={styles.chart_hint}>
+                <Text style={styles.chart_hint_text}>Appuie sur un point pour voir l'objectif journalier</Text>
+              </View>
+              <OverviewChart
+                milestones={milestones}
+                current_hours={current_hours}
+                target_hours={target_hours}
+                chart_width={chart_width}
+                selected_week={selected_milestone?.week ?? null}
+                on_milestone_press={handle_milestone_press}
+              />
+              <PhaseLegend />
+            </>
+          ) : (
+            <>
+              {/* Week selector */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.week_selector}
+              >
+                {milestones.map((m) => {
+                  const is_active = active_milestone.week === m.week;
+                  return (
+                    <TouchableOpacity
+                      key={m.week}
+                      style={[styles.week_pill, is_active && styles.week_pill_active]}
+                      onPress={() => setSelectedMilestone(m)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.week_pill_label, is_active && styles.week_pill_label_active]}>
+                        S{m.week}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+
+              <WeekDetail
+                milestone={active_milestone}
+                next_milestone={next_milestone}
+              />
+            </>
+          )}
         </Animated.View>
 
         {phase_summaries.map((summary, i) => (
           <Animated.View
-            key={summary.phase}
+            key={`${summary.phase}-${i}`}
             entering={Platform.OS === "web" ? undefined : FadeInDown.delay(160 + i * 60).springify()}
           >
             <PhaseCard summary={summary} />
@@ -496,14 +619,52 @@ const styles = StyleSheet.create({
   chart_card: {
     backgroundColor: colors.offWhite,
     borderRadius: radius.lg,
-    paddingTop: spacing.md,
     paddingBottom: spacing.sm,
     shadowColor: colors.cardShadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
     elevation: 2,
+    overflow: "hidden",
   },
+
+  // Tab toggle
+  chart_tabs: {
+    flexDirection: "row",
+    gap: spacing.xs,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xs,
+  },
+  chart_tab_btn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    backgroundColor: colors.beige,
+  },
+  chart_tab_btn_active: {
+    backgroundColor: colors.primary,
+  },
+  chart_tab_label: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: colors.muted,
+  },
+  chart_tab_label_active: {
+    color: colors.white,
+  },
+
+  // Overview hint
+  chart_hint: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: 4,
+  },
+  chart_hint_text: {
+    fontSize: 11,
+    color: colors.muted,
+    fontStyle: "italic",
+  },
+
   legend: {
     flexDirection: "row",
     justifyContent: "center",
@@ -526,6 +687,99 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     color: colors.muted,
+  },
+
+  // Week selector (detail tab)
+  week_selector: {
+    flexDirection: "row",
+    gap: 6,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+  },
+  week_pill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+    backgroundColor: colors.beige,
+  },
+  week_pill_active: {
+    backgroundColor: colors.primary,
+  },
+  week_pill_label: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: colors.muted,
+  },
+  week_pill_label_active: {
+    color: colors.white,
+  },
+
+  // Week detail (detail tab)
+  week_detail: {
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.md,
+    paddingTop: spacing.xs,
+    gap: spacing.sm,
+  },
+  week_detail_header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  week_detail_badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: radius.pill,
+  },
+  week_detail_badge_text: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: colors.textDark,
+  },
+  week_detail_dates: {
+    fontSize: 12,
+    color: colors.muted,
+  },
+  week_stats_row: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  week_stat_block: {
+    flex: 1,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    alignItems: "center",
+    gap: 3,
+  },
+  week_stat_sep: {
+    width: 1,
+    backgroundColor: colors.beige,
+    marginVertical: spacing.xs,
+  },
+  week_stat_label: {
+    fontSize: 11,
+    color: colors.muted,
+    fontWeight: "500",
+    textAlign: "center",
+  },
+  week_stat_value: {
+    fontSize: 26,
+    fontWeight: "800",
+    color: colors.textPlum,
+    letterSpacing: 0.3,
+  },
+  week_stat_value_unit: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: colors.muted,
+    letterSpacing: 0,
+  },
+  week_stat_unit: {
+    fontSize: 12,
+    color: colors.muted,
+    textAlign: "center",
   },
 
   // Phase detail cards

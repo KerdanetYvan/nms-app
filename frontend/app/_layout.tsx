@@ -83,10 +83,7 @@ export default function RootLayout() {
     <>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" options={{ animation: "none" }} />
-        <Stack.Screen name="program" options={{ animation: "none" }} />
-        <Stack.Screen name="profile" options={{ animation: "none" }} />
-        <Stack.Screen name="settings" options={{ animation: "none" }} />
+        <Stack.Screen name="(tabs)" options={{ animation: "none" }} />
       </Stack>
       <UsagePermissionModal
         visible={showPermModal}

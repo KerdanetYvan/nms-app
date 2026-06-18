@@ -157,8 +157,7 @@ export function BottomNav() {
     if (tab === active) return;
     const target = TAB_ROUTES[tab];
     if (!target) return;
-    if (tab === "home") router.replace(target as never);
-    else router.push(target as never);
+    router.navigate(target as never);
   };
 
   return (
