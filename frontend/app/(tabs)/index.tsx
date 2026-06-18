@@ -1,10 +1,5 @@
 import { useRouter, type Href } from "expo-router";
 import { useEffect, useState } from "react";
-
-import { api } from "@/src/api/client";
-import { supabase } from "@/src/lib/supabase";
-import { BottomNav } from "@/src/components/bottom-nav";
-import { DooLogo } from "@/src/components/doo-logo";
 import {
   Platform,
   ScrollView,
@@ -14,89 +9,127 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
+import Svg, { Path, Rect as SvgRect } from "react-native-svg";
 
+import { api } from "@/src/api/client";
+import { DooLogo } from "@/src/components/doo-logo";
+import { BottomNav } from "@/src/components/bottom-nav";
 import { colors, radius, spacing } from "@/src/theme/colors";
 
-type IconLib = "ion" | "mci";
+// ─── SVG icons ────────────────────────────────────────────────────────────────
+
+type IconProps = { color: string; size?: number };
+
+function CoffeeIcon({ color, size = 24 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M10 2v2" />
+      <Path d="M14 2v2" />
+      <Path d="M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1" />
+      <Path d="M6 2v2" />
+    </Svg>
+  );
+}
+
+function MetroIcon({ color, size = 24 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <SvgRect width={16} height={16} x={4} y={3} rx={2} stroke={color} fill="none" />
+      <Path d="M4 11h16" />
+      <Path d="M12 3v8" />
+      <Path d="m8 19-2 3" />
+      <Path d="m18 22-2-3" />
+      <Path d="M8 15h.01" />
+      <Path d="M16 15h.01" />
+    </Svg>
+  );
+}
+
+function BedIcon({ color, size = 24 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8" />
+      <Path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4" />
+      <Path d="M12 4v6" />
+      <Path d="M2 18h20" />
+    </Svg>
+  );
+}
+
+function ChairIcon({ color, size = 24 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="m15 13 3.708 7.416" />
+      <Path d="M3 19a15 15 0 0 0 18 0" />
+      <Path d="m3 2 3.21 9.633A2 2 0 0 0 8.109 13H18" />
+      <Path d="m9 13-3.708 7.416" />
+    </Svg>
+  );
+}
+
+function HouseIcon({ color, size = 24 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+      <Path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </Svg>
+  );
+}
+
+function BusIcon({ color, size = 24 }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <Path d="M4 6 2 7" />
+      <Path d="M10 6h4" />
+      <Path d="m22 7-2-1" />
+      <SvgRect width={16} height={16} x={4} y={3} rx={2} stroke={color} fill="none" />
+      <Path d="M4 11h16" />
+      <Path d="M8 15h.01" />
+      <Path d="M16 15h.01" />
+      <Path d="M6 19v2" />
+      <Path d="M18 21v-2" />
+    </Svg>
+  );
+}
+
+// ─── Context buttons ──────────────────────────────────────────────────────────
+
+type ContextKey = "pause" | "metro" | "lit" | "salle_attente" | "maison" | "bus";
 
 type ContextButton = {
-  key: string;
+  key: ContextKey;
   label: string;
   bg: string;
   textColor: string;
-  iconColor: string;
-  icon: string;
-  lib: IconLib;
 };
 
 const CONTEXT_BUTTONS: ContextButton[] = [
-  {
-    key: "bus",
-    label: "Je suis dans le bus",
-    bg: colors.primary,
-    textColor: colors.white,
-    iconColor: colors.white,
-    icon: "bus",
-    lib: "ion",
-  },
-  {
-    key: "pause",
-    label: "Je suis en pause",
-    bg: colors.secondary,
-    textColor: colors.textDark,
-    iconColor: colors.textDark,
-    icon: "coffee-outline",
-    lib: "mci",
-  },
-  {
-    key: "lit",
-    label: "Je suis dans mon lit",
-    bg: colors.rose,
-    textColor: colors.textDark,
-    iconColor: colors.textDark,
-    icon: "bed-outline",
-    lib: "mci",
-  },
-  {
-    key: "salle_attente",
-    label: "Je suis dans la salle d'attente",
-    bg: colors.yellow,
-    textColor: colors.textDark,
-    iconColor: colors.textDark,
-    icon: "seat-outline",
-    lib: "mci",
-  },
-  {
-    key: "metro",
-    label: "Je suis dans le métro",
-    bg: colors.beige,
-    textColor: colors.textDark,
-    iconColor: colors.textDark,
-    icon: "subway-variant",
-    lib: "mci",
-  },
-  {
-    key: "maison",
-    label: "Je suis à la maison",
-    bg: colors.offWhite,
-    textColor: colors.textDark,
-    iconColor: colors.textDark,
-    icon: "home-outline",
-    lib: "ion",
-  },
+  { key: "pause",        label: "Je suis en pause",                bg: colors.secondary, textColor: colors.textDark },
+  { key: "metro",        label: "Je suis dans le métro",           bg: colors.beige,     textColor: colors.textDark },
+  { key: "lit",          label: "Je suis dans mon lit",            bg: colors.rose,      textColor: colors.textDark },
+  { key: "salle_attente",label: "Je suis dans la salle d'attente", bg: colors.yellow,    textColor: colors.textDark },
+  { key: "maison",       label: "Je suis à la maison",             bg: colors.offWhite,  textColor: colors.textDark },
+  { key: "bus",          label: "Je suis dans le bus",             bg: colors.primary,   textColor: colors.white    },
 ];
 
-function ContextIcon({ btn, size }: { btn: ContextButton; size: number }) {
-  if (btn.lib === "ion") {
-    return <Ionicons name={btn.icon as never} size={size} color={btn.iconColor} />;
-  }
-  return (
-    <MaterialCommunityIcons name={btn.icon as never} size={size} color={btn.iconColor} />
-  );
+function ContextIcon({ contextKey, color }: { contextKey: ContextKey; color: string }) {
+  if (contextKey === "pause")         return <CoffeeIcon color={color} />;
+  if (contextKey === "metro")         return <MetroIcon color={color} />;
+  if (contextKey === "lit")           return <BedIcon color={color} />;
+  if (contextKey === "salle_attente") return <ChairIcon color={color} />;
+  if (contextKey === "maison")        return <HouseIcon color={color} />;
+  return <BusIcon color={color} />;
 }
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function Home() {
   const router = useRouter();
@@ -107,7 +140,6 @@ export default function Home() {
     api.getUserProfile()
       .then((profile) => {
         if (!profile) {
-          // Types regenerated by Expo on next `expo start` — cast until then
           router.replace("/onboarding" as unknown as Href);
         } else {
           setProfileChecked(true);
@@ -131,15 +163,15 @@ export default function Home() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]} testID="home-screen">
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => supabase.auth.signOut()} hitSlop={8}>
-          <DooLogo width={120} />
-        </TouchableOpacity>
+        <DooLogo width={150} />
       </View>
 
+      {/* Greeting */}
       <Text style={styles.subtitle} testID="home-subtitle">
         Salut !{"\n"}Que se passe t-il autour de toi ?
       </Text>
 
+      {/* Context buttons */}
       <ScrollView
         style={styles.list}
         contentContainerStyle={{ paddingBottom: insets.bottom + 94 }}
@@ -148,18 +180,16 @@ export default function Home() {
         {CONTEXT_BUTTONS.map((btn, i) => (
           <Animated.View
             key={btn.key}
-            entering={
-              Platform.OS === "web" ? undefined : FadeInDown.delay(i * 70).springify()
-            }
+            entering={Platform.OS === "web" ? undefined : FadeInDown.delay(i * 60).springify()}
           >
             <TouchableOpacity
               activeOpacity={0.85}
-              style={[styles.ctxButton, { backgroundColor: btn.bg }]}
+              style={[styles.ctx_btn, { backgroundColor: btn.bg }]}
               onPress={() => onSelectContext(btn)}
               testID={`context-button-${btn.key}`}
             >
-              <Text style={[styles.ctxLabel, { color: btn.textColor }]}>{btn.label}</Text>
-              <ContextIcon btn={btn} size={24} />
+              <Text style={[styles.ctx_label, { color: btn.textColor }]}>{btn.label}</Text>
+              <ContextIcon contextKey={btn.key} color={btn.textColor} />
             </TouchableOpacity>
           </Animated.View>
         ))}
@@ -170,52 +200,51 @@ export default function Home() {
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
     paddingHorizontal: spacing.lg,
   },
+
   header: {
-    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    paddingTop: spacing.md,
-    paddingBottom: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.xl,
   },
-  brand: {
-    fontSize: 30,
-    fontWeight: "800",
-    color: colors.textPlum,
-    letterSpacing: 1,
-  },
+
+  // Greeting
   subtitle: {
-    fontSize: 18,
-    lineHeight: 26,
+    fontSize: 20,
+    lineHeight: 30,
     color: colors.textDark,
-    marginBottom: spacing.lg,
-    fontWeight: "500",
+    fontWeight: "700",
+    marginBottom: spacing.md,
   },
+
+  // Buttons
   list: {
     flex: 1,
   },
-  ctxButton: {
+  ctx_btn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 22,
+    paddingVertical: 18,
     paddingHorizontal: spacing.lg,
-    borderRadius: radius.md,
-    marginBottom: spacing.md,
+    borderRadius: radius.lg,
+    marginBottom: spacing.sm,
     shadowColor: colors.cardShadow,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 2,
   },
-  ctxLabel: {
-    fontSize: 16,
-    fontWeight: "600",
+  ctx_label: {
+    fontSize: 17,
+    fontWeight: "700",
     flex: 1,
     marginRight: spacing.sm,
   },
