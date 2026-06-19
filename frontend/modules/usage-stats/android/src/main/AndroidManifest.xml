@@ -3,6 +3,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <!-- Required on Android 14+ (API 34) for dataSync foreground service type -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Required for UsageStatsManager access (usage monitoring feature) -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+    <!-- Required for ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS intent -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
     <application>
         <service

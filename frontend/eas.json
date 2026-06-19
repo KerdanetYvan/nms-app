@@ -10,14 +10,12 @@
     },
     "preview": {
       "distribution": "internal",
-      "prebuildCommand": "expo prebuild --platform android",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
-      "autoIncrement": true,
-      "prebuildCommand": "expo prebuild --platform android"
+      "autoIncrement": true
     }
   },
   "submit": {

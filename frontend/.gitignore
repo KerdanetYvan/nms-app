@@ -9,7 +9,8 @@ dist/
 web-build/
 expo-env.d.ts
 
-# Native
+# Native — android/ est généré par expo prebuild, pas committé
+/android/
 .kotlin/
 *.orig.*
 *.jks
